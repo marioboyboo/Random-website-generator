@@ -179,7 +179,6 @@
         let gainNode = null;
         let sourceNode = null;
 
-        // Base setup helper to initialize the mixer
         function initAudioPipeline(player) {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -193,7 +192,7 @@
             }
         }
 
-        // Handles regular button clicks (Random Play, Non-looping)
+        // Standard random track play
         window.parentPlayAudio = function() {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
@@ -202,7 +201,7 @@
             var trackName = "MP3 " + trackNumber + ".mp3";
             
             initAudioPipeline(player);
-            player.loop = false; // Regular clicks do not loop
+            player.loop = false; 
 
             if (trackNumber === 9) { gainNode.gain.value = 2.0; } 
             else { gainNode.gain.value = 1.0; }
@@ -214,35 +213,37 @@
             player.play().catch(function(err) { console.error(err); });
         };
 
-        // NEW: Handles the text input magic trick (Triggers looping file playback)
+        // Strict fix: Handle target looping via dynamic input matching
         window.handleTextInputSecret = function(inputVal) {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
-            var trimmedVal = inputVal.trim();
+            
+            // Clean up text completely: turn lowercase, strip extra spaces
+            var cleanText = inputVal.trim().toLowerCase().replace(/\s+/g, '');
 
-            // Match pattern like "MP3 1.mp3" through "MP3 10.mp3" (case insensitive)
-            var match = trimmedVal.match(/^mp3\s+([1-9]|10)\.mp3$/i);
+            // Match strings like "mp31.mp3" up to "mp310.mp3"
+            var match = cleanText.match(/^mp3([1-9]|10)\.mp3$/);
 
             if (match) {
                 var trackNumber = parseInt(match[1]);
                 var trackName = "MP3 " + trackNumber + ".mp3";
 
                 initAudioPipeline(player);
-                player.loop = true; // Turn on continuous looping
+                player.loop = true; 
 
                 if (trackNumber === 9) { gainNode.gain.value = 2.0; } 
                 else { gainNode.gain.value = 1.0; }
 
-                if (status) status.innerText = "Looping: " + trackName;
+                if (status) status.innerText = "🔄 Looping: " + trackName;
 
-                // Only reload and change source if it's not already playing this loop track
+                // Only load if it isn't currently playing this exact track
                 if (!player.src.endsWith(encodeURIComponent(trackName))) {
                     player.src = trackName;
                     player.load();
-                    player.play().catch(function(err) { console.error(err); });
+                    player.play().catch(function(err) { console.error("Loop failed:", err); });
                 }
-            } else if (trimmedVal === "") {
-                // If text is cleared out, halt music loops
+            } else if (cleanText === "") {
+                // Instantly kill loops if they empty the box
                 player.pause();
                 player.loop = false;
                 if (status) status.innerText = "";
@@ -250,7 +251,6 @@
         };
 
         function generateRandomWebsite() {
-            // Force reset any active background audio loop whenever a brand new site is generated
             var player = document.getElementById('masterAudioPlayer');
             if (player) {
                 player.pause();
@@ -269,6 +269,12 @@
                 <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">${rand(phrases)}</p>
             `;
 
+            // Always render the status container so text loops don't crash when button isn't generated
+            structuralContent += `
+                <div style="margin-bottom: 20px; font-family: '${selectedFont}', sans-serif;">
+                    <p id="audioStatus" style="font-size:1rem; font-weight:bold; color:${textColor}; min-height: 1.2em;"></p>
+                </div>\n`;
+
             // 1/2 Chance text box appears
             if (Math.random() < 0.5) {
                 structuralContent += `
@@ -279,12 +285,6 @@
             }
 
             // 1/4 Chance MP3 button appears
-            // Added a fallback status element container so even if the button doesn't spawn, the input box loop text can display!
-            structuralContent += `
-                <div style="margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">
-                    <p id="audioStatus" style="font-size:0.9rem; font-weight:bold; color:${textColor}; opacity:0.9;"></p>
-                </div>\n`;
-
             if (Math.random() < 0.25) {
                 structuralContent += `
                 <div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block; font-family: '${selectedFont}', sans-serif;">
@@ -362,8 +362,8 @@
         function playLocalLoopMP3(inputVal) {
             var player = document.getElementById('localChaosPlayer');
             var status = document.getElementById('audioStatus');
-            var trimmed = inputVal.trim();
-            var match = trimmed.match(/^mp3\\s+([1-9]|10)\\.mp3$/i);
+            var cleanText = inputVal.trim().toLowerCase().replace(/\\s+/g, '');
+            var match = cleanText.match(/^mp3([1-9]|10)\\.mp3$/);
 
             if (match) {
                 var trackNumber = parseInt(match[1]);
@@ -373,12 +373,12 @@
                 player.loop = true;
                 if (trackNumber === 9) { gainNode.gain.value = 2.0; } else { gainNode.gain.value = 1.0; }
                 
-                if (status) status.innerText = "Looping: " + targetTrackName;
+                if (status) status.innerText = "🔄 Looping: " + targetTrackName;
                 if (!player.src.endsWith(encodeURIComponent(targetTrackName))) {
                     player.src = targetTrackName;
                     player.play().catch(function(err) { console.log(err); });
                 }
-            } else if (trimmed === "") {
+            } else if (cleanText === "") {
                 player.pause();
                 player.loop = false;
                 if (status) status.innerText = "";
