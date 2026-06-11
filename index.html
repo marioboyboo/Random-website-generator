@@ -115,11 +115,17 @@
             font-size: 0.9rem;
         }
 
-        iframe {
+        /* Direct Preview Window Wrapper */
+        #previewCanvas {
             width: 100%;
             height: 100%;
-            border: none;
+            overflow: auto;
             background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background-color 0.3s ease;
         }
     </style>
 </head>
@@ -141,7 +147,7 @@
 
         <div class="panel">
             <div class="panel-header">Live Preview</div>
-            <iframe id="previewWindow"></iframe>
+            <div id="previewCanvas"></div>
         </div>
     </div>
 
@@ -152,14 +158,12 @@
         const nouns = ["Portal", "System", "Node", "Network", "Beacon", "Core", "Module", "Vortex", "Grid", "Terminal", "Buffer", "Array", "Engine", "Console"];
         const phrases = [
             "System calibration is currently underway.",
-            "Do not close this window until the data finishes streaming.",
             "Data stream injection has reached maximum capacity.",
             "Welcome to the fallback terminal node.",
-            "Unidentified protocols have been successfully initiated."
+            "Unidentified protocols have been successfully initiated.",
+            "Processing structural chaos elements..."
         ];
         const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS"];
-
-        let currentBlobUrl = null;
 
         function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
         function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -173,116 +177,7 @@
             const selectedFont = rand(fonts);
             const siteTitle = `${rand(words)} ${rand(nouns)}`;
             
+            // Build the dynamic inside components
             let structuralContent = `
-                <h1 style="color: ${headingColor}; font-size: ${randRange(2, 4)}rem; margin-bottom: 15px;">${siteTitle}</h1>
-                <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px;">${rand(phrases)}</p>
-            `;
-
-            // 1/2 Chance of input text box appearing
-            if (Math.random() < 0.5) {
-                structuralContent += `
-                <div style="margin-bottom: 25px;">
-                    <label style="display:block; margin-bottom:5px; color:${textColor}; font-weight:bold;">Random Input Field:</label>
-                    <input type="text" placeholder="Type something completely random here..." style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
-                </div>\n`;
-            }
-
-            // 1/4 Chance of local MP3 random play button appearing
-            if (Math.random() < 0.25) {
-                structuralContent += `
-                <div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block;">
-                    <p style="color: ${textColor}; font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🎵 Audio Node Trigger Detected</p>
-                    <button onclick="requestAudioPlay()" style="background: ${headingColor}; color: #fff; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000;">
-                        ▶ Play Random MP3
-                    </button>
-                    <p id="audioStatus" style="font-size:0.8rem; margin-top:5px; color:${textColor}; opacity:0.8;"></p>
-                </div>\n`;
-            }
-
-            const generatedCode = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>${siteTitle}</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background-color: ${mainBg}; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            font-family: '${selectedFont}', sans-serif;
-            padding: 20px;
-        }
-        .container { 
-            background-color: ${panelBg}; 
-            padding: 40px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-            max-width: 600px; 
-            width: 100%;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container">
-        ${structuralContent.trim()}
-    </div>
-
-    <script>
-        function requestAudioPlay() {
-            var trackNumber = Math.floor(Math.random() * 10) + 1;
-            var trackName = "MP3 " + trackNumber + ".mp3";
-            
-            document.getElementById('audioStatus').innerText = "Playing: " + trackName;
-            
-            // Post track request up to parent host page
-            window.parent.postMessage({ action: 'play_mp3', file: trackName }, '*');
-        }
-    <\/script>
-
-</body>
-</html>`;
-
-            document.getElementById('codeViewer').value = generatedCode;
-
-            // Free up memory from old blob generation
-            if (currentBlobUrl) {
-                URL.revokeObjectURL(currentBlobUrl);
-            }
-
-            // FIX: Generate via Blob URL framework so relative paths work perfectly 
-            const blob = new Blob([generatedCode], { type: 'text/html' });
-            currentBlobUrl = URL.createObjectURL(blob);
-            
-            const iframe = document.getElementById('previewWindow');
-            iframe.src = currentBlobUrl;
-        }
-
-        // Parent listens for message events and fires relative tracks cleanly
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.action === 'play_mp3') {
-                var player = document.getElementById('masterAudioPlayer');
-                // Relative path links hook directly since we're in a shared origin blob context!
-                player.src = event.data.file;
-                player.play().catch(function(err) {
-                    console.error("Playback failed:", err);
-                });
-            }
-        });
-
-        function copyCode() {
-            const codeViewer = document.getElementById('codeViewer');
-            if(!codeViewer.value) return;
-            codeViewer.select();
-            navigator.clipboard.writeText(codeViewer.value);
-            alert('Code copied!');
-        }
-
-        window.onload = generateRandomWebsite;
-    </script>
-</body>
-</html>
+                <h1 style="color: ${headingColor}; font-size: ${randRange(2, 4)}rem; margin-bottom: 15px; font-family: '${selected
+                                                                                                                          
