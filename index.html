@@ -102,13 +102,6 @@
             border-bottom: 1px solid #334155;
         }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background-color: white;
-        }
-
         textarea {
             width: 100%;
             height: 100%;
@@ -120,6 +113,13 @@
             resize: none;
             outline: none;
             font-size: 0.9rem;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: white;
         }
     </style>
 </head>
@@ -141,12 +141,11 @@
 
         <div class="panel">
             <div class="panel-header">Live Preview</div>
-            <iframe id="previewWindow" sandbox="allow-scripts"></iframe>
+            <iframe id="previewWindow"></iframe>
         </div>
     </div>
 
     <script>
-        // Data banks for generation chaos
         const niches = [
             { name: "Cyberpunk Taco Stand", tagline: "Neo-Tokyo flavor, lightspeed delivery.", items: ["Neon Chorizo Taco", "Glitch Guacamole", "Synth-Asada Burrito"] },
             { name: "Snail Speed Dating", tagline: "Find love at 0.03 miles per hour.", items: ["Slow-paced chats", "Shell matching algorithms", "Lettuce buffets"] },
@@ -156,38 +155,9 @@
         ];
 
         const colorPalettes = [
-            { bg: "#ff007f", primary: "#00f0ff", text: "#ffffff", cardBg: "#1a0033" }, // Cyber
-            { bg: "#f4f1de", primary: "#e07a5f", text: "#3d405b", cardBg: "#f2cc8f" }, // Retro Earth
-            { bg: "#0d1b2a", primary: "#e0e1dd", text: "#778da9", cardBg: "#415a77" }, // Deep Space
-            { bg: "#100007", primary: "#ff3333", text: "#ffcccc", cardBg: "#330011" }, // Vampire Minimalist
-            { bg: "#e6f8f2", primary: "#06d6a0", text: "#073b4c", cardBg: "#ffffff" }  // Fresh Mint
-        ];
-
-        const layouts = [
-            "brutalist", 
-            "minimal", 
-            "corporate-satire"
-        ];
-
-        function getRandomElement(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
-
-        function generateRandomWebsite() {
-            const niche = getRandomElement(niches);
-            const palette = getRandomElement(colorPalettes);
-            const layout = getRandomElement(layouts);
-
-            // Shuffling lists for uniqueness
-            let featuresHTML = niche.items.map(item => `<li>✨ ${item}</li>`).join('\n            ');
-
-            let customCSS = '';
+            { bg: "#ff007f", primary: "#00f0ff", text: "#ffffff", cardBg: "#1a0033" }, 
+            { bg: "#f4f1de", primary: "#e07a5f", text: "#3d405b", cardBg: "#f2cc8f" }, 
+            { bg: "#0d1b2a", primary: "#e0e1dd", text: "#778da9", cardBg: "#415a77" }, 
+            { bg: "#100007", primary: "#ff3333", text: "#ffcccc", cardBg: "#330011" }, 
+            { bg: "#e6f8f2", primary: "#06d6a0", text: "#073b4c", cardBg: "#ffffff" }
             
-            // Generate layout variations based on selection
-            if (layout === "brutalist") {
-                customCSS = `
-                    body { background: ${palette.bg}; color: ${palette.text}; padding: 3rem; font-family: sans-serif; }
-                    .wrapper { border: 5px solid ${palette.text}; padding: 2rem; background: ${palette.cardBg}; box-shadow: 10px 10px 0px ${palette.primary}; }
-                    h1 { font-size: 3.5rem; text-transform: uppercase; border-bottom: 5px solid ${palette.text}; padding-bottom: 1rem; color: ${palette.primary}; }
-                    ul { list-style: none; margin-top: 2rem; }
-      
