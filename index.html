@@ -127,7 +127,7 @@
 
     <header>
         <h1>Random <span>Site Generator</span></h1>
-        <button class="btn" onclick="generateRandomWebsite()">🎲 Generate New Site</button>
+        <button class="btn" onclick="unlockAndGenerate()">🎲 Generate New Site</button>
     </header>
 
     <div class="main-container">
@@ -145,7 +145,7 @@
         </div>
     </div>
 
-    <audio id="masterAudioPlayer"></audio>
+    <audio id="masterAudioPlayer" controls style="display: none;"></audio>
 
     <script>
         const words = ["Quantum", "Glitch", "Matrix", "Cyber", "Void", "Omega", "Hyper", "Alpha", "Delta", "Turbo", "Cosmic", "Phantom", "Solar", "Static", "Cryptic"];
@@ -162,6 +162,19 @@
         function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
         function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
         function randColor() { return `hsl(${randRange(0, 360)}, ${randRange(50, 95)}%, ${randRange(30, 70)}%)`; }
+
+        // Audio unlock mechanism
+        function unlockAndGenerate() {
+            var player = document.getElementById('masterAudioPlayer');
+            // Play a completely silent moment to force the browser to grant audio permission to our main file
+            player.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAA=";
+            player.play().then(() => {
+                generateRandomWebsite();
+            }).catch(() => {
+                // Fallback if browser blocks data URI
+                generateRandomWebsite();
+            });
+        }
 
         function generateRandomWebsite() {
             const headingColor = randColor();
@@ -232,14 +245,13 @@
     </div>
 
     <script>
-        // Communicates out of the sandbox to tell parent layout to run the file
         function requestAudioPlay() {
             var trackNumber = Math.floor(Math.random() * 10) + 1;
             var trackName = "MP3 " + trackNumber + ".mp3";
             
             document.getElementById('audioStatus').innerText = "Playing: " + trackName;
             
-            // Send track event window up
+            // Post track request up to parent host page
             window.parent.postMessage({ action: 'play_mp3', file: trackName }, '*');
         }
     <\/script>
@@ -253,13 +265,13 @@
             iframe.src = "data:text/html;charset=utf-8," + encodeURIComponent(generatedCode);
         }
 
-        // Bridge Listener: intercepts request from the preview panel and plays local sound
+        // Parent intercepts preview window clicks and fires local audio files
         window.addEventListener('message', function(event) {
             if (event.data && event.data.action === 'play_mp3') {
                 var player = document.getElementById('masterAudioPlayer');
                 player.src = event.data.file;
                 player.play().catch(function(err) {
-                    console.error("Local play failure:", err);
+                    console.error("Audio playback blocked or file missing:", err);
                 });
             }
         });
@@ -272,6 +284,7 @@
             alert('Code copied to your clipboard!');
         }
 
+        // Load the first setup
         window.onload = generateRandomWebsite;
     </script>
 </body>
