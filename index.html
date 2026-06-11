@@ -179,5 +179,118 @@
             
             // Build the dynamic inside components
             let structuralContent = `
-                <h1 style="color: ${headingColor}; font-size: ${randRange(2, 4)}rem; margin-bottom: 15px; font-family: '${selected
-                                                                                                                          
+                <h1 style="color: ${headingColor}; font-size: ${randRange(2, 4)}rem; margin-bottom: 15px; font-family: '${selectedFont}', sans-serif;">${siteTitle}</h1>
+                <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">${rand(phrases)}</p>
+            `;
+
+            // 1/2 Chance of text box
+            if (Math.random() < 0.5) {
+                structuralContent += `
+                <div style="margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">
+                    <label style="display:block; margin-bottom:5px; color:${textColor}; font-weight:bold;">Random Input Field:</label>
+                    <input type="text" placeholder="Type something completely random here..." style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
+                </div>\n`;
+            }
+
+            // 1/4 Chance of MP3 play button
+            if (Math.random() < 0.25) {
+                structuralContent += `
+                <div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block; font-family: '${selectedFont}', sans-serif;">
+                    <p style="color: ${textColor}; font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🎵 Audio Node Trigger Detected</p>
+                    <button onclick="parentPlayAudio()" style="background: ${headingColor}; color: #fff; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000;">
+                        ▶ Play Random MP3
+                    </button>
+                    <p id="audioStatus" style="font-size:0.8rem; margin-top:5px; color:${textColor}; opacity:0.8;"></p>
+                </div>\n`;
+            }
+
+            // This is the clean code displayed to the user in the text box
+            const textCodeOutput = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${siteTitle}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background-color: ${mainBg}; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            font-family: '${selectedFont}', sans-serif;
+            padding: 20px;
+        }
+        .container { 
+            background-color: ${panelBg}; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            max-width: 600px; 
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        ${structuralContent.trim().replace('onclick="parentPlayAudio()"', 'onclick="playRandomLocalMP3()"')}
+    </div>
+
+    <audio id="localChaosPlayer"></audio>
+    <script>
+        function playRandomLocalMP3() {
+            var player = document.getElementById('localChaosPlayer');
+            var status = document.getElementById('audioStatus');
+            var trackNumber = Math.floor(Math.random() * 10) + 1;
+            var targetTrackName = "MP3 " + trackNumber + ".mp3";
+            status.innerText = "Playing: " + targetTrackName;
+            player.src = targetTrackName;
+            player.play().catch(function(err) { console.log(err); });
+        }
+    <\/script>
+</body>
+</html>`;
+
+            // 1. Update the Code Viewer panel
+            document.getElementById('codeViewer').value = textCodeOutput;
+
+            // 2. Render directly onto our main page's preview panel (No iframe blocks!)
+            const canvas = document.getElementById('previewCanvas');
+            canvas.style.backgroundColor = mainBg;
+            canvas.innerHTML = `
+                <div style="background-color: ${panelBg}; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 600px; width: 100%; text-align: center;">
+                    ${structuralContent.trim()}
+                </div>
+            `;
+        }
+
+        // Handles audio on the live canvas directly
+        function parentPlayAudio() {
+            var player = document.getElementById('masterAudioPlayer');
+            var status = document.getElementById('audioStatus');
+            
+            var trackNumber = Math.floor(Math.random() * 10) + 1;
+            var trackName = "MP3 " + trackNumber + ".mp3";
+            
+            if (status) status.innerText = "Playing: " + trackName;
+            
+            player.src = trackName;
+            player.play().catch(function(err) {
+                if (status) status.innerText = "Audio Blocked by Browser. Click the main screen first!";
+                console.error(err);
+            });
+        }
+
+        function copyCode() {
+            const codeViewer = document.getElementById('codeViewer');
+            if(!codeViewer.value) return;
+            codeViewer.select();
+            navigator.clipboard.writeText(codeViewer.value);
+            alert('Code copied!');
+        }
+
+        window.onload = generateRandomWebsite;
+    </script>
+</body>
+</html>
