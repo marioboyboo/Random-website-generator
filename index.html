@@ -127,7 +127,7 @@
 
     <header>
         <h1>Random <span>Site Generator</span></h1>
-        <button class="btn" onclick="unlockAndGenerate()">🎲 Generate New Site</button>
+        <button class="btn" onclick="generateRandomWebsite()">🎲 Generate New Site</button>
     </header>
 
     <div class="main-container">
@@ -145,9 +145,16 @@
         </div>
     </div>
 
-    <audio id="masterAudioPlayer" controls style="display: none;"></audio>
+    <audio id="masterAudioPlayer"></audio>
 
     <script>
+        // -------------------------------------------------------------
+        // CONFIGURATION: Paste your GitHub Username and Repository name here!
+        // -------------------------------------------------------------
+        const GITHUB_USERNAME = "YOUR_USERNAME";
+        const REPO_NAME = "YOUR_REPO_NAME";
+        // -------------------------------------------------------------
+
         const words = ["Quantum", "Glitch", "Matrix", "Cyber", "Void", "Omega", "Hyper", "Alpha", "Delta", "Turbo", "Cosmic", "Phantom", "Solar", "Static", "Cryptic"];
         const nouns = ["Portal", "System", "Node", "Network", "Beacon", "Core", "Module", "Vortex", "Grid", "Terminal", "Buffer", "Array", "Engine", "Console"];
         const phrases = [
@@ -163,26 +170,12 @@
         function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
         function randColor() { return `hsl(${randRange(0, 360)}, ${randRange(50, 95)}%, ${randRange(30, 70)}%)`; }
 
-        // Audio unlock mechanism
-        function unlockAndGenerate() {
-            var player = document.getElementById('masterAudioPlayer');
-            // Play a completely silent moment to force the browser to grant audio permission to our main file
-            player.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAA=";
-            player.play().then(() => {
-                generateRandomWebsite();
-            }).catch(() => {
-                // Fallback if browser blocks data URI
-                generateRandomWebsite();
-            });
-        }
-
         function generateRandomWebsite() {
             const headingColor = randColor();
             const textColor = randColor();
             const panelBg = randColor();
             const mainBg = randColor();
             const selectedFont = rand(fonts);
-            
             const siteTitle = `${rand(words)} ${rand(nouns)}`;
             
             let structuralContent = `
@@ -265,13 +258,22 @@
             iframe.src = "data:text/html;charset=utf-8," + encodeURIComponent(generatedCode);
         }
 
-        // Parent intercepts preview window clicks and fires local audio files
+        // Bridge Listener: Intercepts the iframe trigger and builds a secure web URL link
         window.addEventListener('message', function(event) {
             if (event.data && event.data.action === 'play_mp3') {
                 var player = document.getElementById('masterAudioPlayer');
-                player.src = event.data.file;
+                
+                // If GitHub details are configured, stream from your repository online
+                if (GITHUB_USERNAME !== "YOUR_USERNAME") {
+                    player.src = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/main/${encodeURIComponent(event.data.file)}`;
+                } else {
+                    // Fallback to local link if file is run over a server or in a permissive browser environment
+                    player.src = event.data.file;
+                }
+                
                 player.play().catch(function(err) {
-                    console.error("Audio playback blocked or file missing:", err);
+                    console.error("Playback failed:", err);
+                    alert("Audio blocked or file missing! If running locally from your drive, please configure your GitHub details inside the script.");
                 });
             }
         });
@@ -284,7 +286,6 @@
             alert('Code copied to your clipboard!');
         }
 
-        // Load the first setup
         window.onload = generateRandomWebsite;
     </script>
 </body>
