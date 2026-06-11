@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Random Website Generator</title>
+    <title>The Pure Random Site Generator</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -136,7 +136,7 @@
                 <span>Source Code (HTML/CSS)</span>
                 <button class="btn btn-secondary" onclick="copyCode()">Copy Code</button>
             </div>
-            <textarea id="codeViewer" readonly placeholder="Click 'Generate New Site' to build something crazy..."></textarea>
+            <textarea id="codeViewer" readonly placeholder="Click 'Generate New Site' to build something..."></textarea>
         </div>
 
         <div class="panel">
@@ -146,18 +146,134 @@
     </div>
 
     <script>
-        const niches = [
-            { name: "Cyberpunk Taco Stand", tagline: "Neo-Tokyo flavor, lightspeed delivery.", items: ["Neon Chorizo Taco", "Glitch Guacamole", "Synth-Asada Burrito"] },
-            { name: "Snail Speed Dating", tagline: "Find love at 0.03 miles per hour.", items: ["Slow-paced chats", "Shell matching algorithms", "Lettuce buffets"] },
-            { name: "Extreme Competitive Nap Association", tagline: "Synchronized sleeping at its finest.", items: ["Memory foam testing", "Snore pitch modulation", "Competitive drooling"] },
-            { name: "Wizard Tech Support", tagline: "Have you tried turning your wand off and on again?", items: ["Curse removal", "Mana router reboots", "Cloud scrying errors"] },
-            { name: "Alien Cow Abduction Agency", tagline: "We don't ask why, we just hoist bovine.", items: ["Premium tractor beams", "Crop circle designs", "Interstellar pasture transport"] }
+        // Chaotic vocabulary banks for purely random generation
+        const words = ["Quantum", "Glitch", "Matrix", "Cyber", "Void", "Omega", "Hyper", "Alpha", "Delta", "Turbo", "Cosmic", "Phantom", "Solar", "Static", "Cryptic"];
+        const nouns = ["Portal", "System", "Node", "Network", "Beacon", "Core", "Module", "Vortex", "Grid", "Terminal", "Buffer", "Array", "Engine", "Console"];
+        const phrases = [
+            "System calibration is currently underway.",
+            "Do not close this window until the download finishes.",
+            "Data stream injection has reached maximum capacity.",
+            "Welcome to the fallback terminal node.",
+            "Unidentified protocols have been successfully initiated."
         ];
+        const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS", "Trebuchet MS"];
 
-        const colorPalettes = [
-            { bg: "#ff007f", primary: "#00f0ff", text: "#ffffff", cardBg: "#1a0033" }, 
-            { bg: "#f4f1de", primary: "#e07a5f", text: "#3d405b", cardBg: "#f2cc8f" }, 
-            { bg: "#0d1b2a", primary: "#e0e1dd", text: "#778da9", cardBg: "#415a77" }, 
-            { bg: "#100007", primary: "#ff3333", text: "#ffcccc", cardBg: "#330011" }, 
-            { bg: "#e6f8f2", primary: "#06d6a0", text: "#073b4c", cardBg: "#ffffff" }
+        function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        function randColor() { return `hsl(${randRange(0, 360)}, ${randRange(50, 95)}%, ${randRange(30, 70)}%)`; }
+
+        function generateRandomWebsite() {
+            const headingColor = randColor();
+            const textColor = randColor();
+            const panelBg = randColor();
+            const mainBg = randColor();
+            const selectedFont = rand(fonts);
             
+            const siteTitle = `${rand(words)} ${rand(nouns)}`;
+            
+            // Generate a random mix of paragraphs and headings
+            let structuralContent = `
+                <h1 style="color: ${headingColor}; font-size: ${randRange(2, 4)}rem; margin-bottom: 15px;">${siteTitle}</h1>
+                <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px;">${rand(phrases)}</p>
+            `;
+
+            // Rule 1: 1/2 (50%) chance of a text box appearing
+            if (Math.random() < 0.5) {
+                structuralContent += `
+                <div style="margin-bottom: 25px;">
+                    <label style="display:block; margin-bottom:5px; color:${textColor}; font-weight:bold;">Random Input Field:</label>
+                    <input type="text" placeholder="Type something completely random here..." style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
+                </div>\n`;
+            }
+
+            // Rule 2: 1/4 (25%) chance of a play button playing 1 of 10 MP3s at random
+            if (Math.random() < 0.25) {
+                structuralContent += `
+                <div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block;">
+                    <p style="color: ${textColor}; font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🎵 Audio Node Trigger Detected</p>
+                    <button onclick="playRandomLocalMP3()" style="background: ${headingColor}; color: #fff; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000;">
+                        ▶ Play Random MP3
+                    </button>
+                    <p id="audioStatus" style="font-size:0.8rem; margin-top:5px; color:${textColor}; opacity:0.8;"></p>
+                </div>\n`;
+            }
+
+            // Compile the total page code package
+            const generatedCode = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${siteTitle}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background-color: ${mainBg}; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            font-family: '${selectedFont}', sans-serif;
+            padding: 20px;
+        }
+        .container { 
+            background-color: ${panelBg}; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            max-width: 600px; 
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        ${structuralContent.trim()}
+    </div>
+
+    <audio id="localChaosPlayer"></audio>
+
+    <script>
+        function playRandomLocalMP3() {
+            var player = document.getElementById('localChaosPlayer');
+            var status = document.getElementById('audioStatus');
+            
+            // Randomly select an integer index between 1 and 10
+            var trackNumber = Math.floor(Math.random() * 10) + 1;
+            var targetTrackName = "MP3 " + trackNumber + ".mp3";
+            
+            status.innerText = "Playing: " + targetTrackName;
+            
+            player.src = targetTrackName;
+            player.play().catch(function(err) {
+                status.innerText = "Error: Ensure '" + targetTrackName + "' is inside this folder!";
+                console.log(err);
+            });
+        }
+    <\/script>
+
+</body>
+</html>`;
+
+            // Display raw text in left panel
+            document.getElementById('codeViewer').value = generatedCode;
+
+            // Deliver safely to the preview window using the Data URL framework
+            const iframe = document.getElementById('previewWindow');
+            iframe.src = "data:text/html;charset=utf-8," + encodeURIComponent(generatedCode);
+        }
+
+        function copyCode() {
+            const codeViewer = document.getElementById('codeViewer');
+            if(!codeViewer.value) return;
+            codeViewer.select();
+            navigator.clipboard.writeText(codeViewer.value);
+            alert('Code copied to your clipboard!');
+        }
+
+        // Fire off initial render instantly
+        window.onload = generateRandomWebsite;
+    </script>
+</body>
+</html>
