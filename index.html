@@ -148,23 +148,18 @@
     <audio id="masterAudioPlayer"></audio>
 
     <script>
-        // -------------------------------------------------------------
-        // CONFIGURATION: Paste your GitHub Username and Repository name here!
-        // -------------------------------------------------------------
-        const GITHUB_USERNAME = "YOUR_USERNAME";
-        const REPO_NAME = "YOUR_REPO_NAME";
-        // -------------------------------------------------------------
-
         const words = ["Quantum", "Glitch", "Matrix", "Cyber", "Void", "Omega", "Hyper", "Alpha", "Delta", "Turbo", "Cosmic", "Phantom", "Solar", "Static", "Cryptic"];
         const nouns = ["Portal", "System", "Node", "Network", "Beacon", "Core", "Module", "Vortex", "Grid", "Terminal", "Buffer", "Array", "Engine", "Console"];
         const phrases = [
             "System calibration is currently underway.",
-            "Do not close this window until the download finishes.",
+            "Do not close this window until the data finishes streaming.",
             "Data stream injection has reached maximum capacity.",
             "Welcome to the fallback terminal node.",
             "Unidentified protocols have been successfully initiated."
         ];
         const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS"];
+
+        let currentBlobUrl = null;
 
         function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
         function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -254,26 +249,27 @@
 
             document.getElementById('codeViewer').value = generatedCode;
 
+            // Free up memory from old blob generation
+            if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+            }
+
+            // FIX: Generate via Blob URL framework so relative paths work perfectly 
+            const blob = new Blob([generatedCode], { type: 'text/html' });
+            currentBlobUrl = URL.createObjectURL(blob);
+            
             const iframe = document.getElementById('previewWindow');
-            iframe.src = "data:text/html;charset=utf-8," + encodeURIComponent(generatedCode);
+            iframe.src = currentBlobUrl;
         }
 
-        // Bridge Listener: Intercepts the iframe trigger and builds a secure web URL link
+        // Parent listens for message events and fires relative tracks cleanly
         window.addEventListener('message', function(event) {
             if (event.data && event.data.action === 'play_mp3') {
                 var player = document.getElementById('masterAudioPlayer');
-                
-                // If GitHub details are configured, stream from your repository online
-                if (GITHUB_USERNAME !== "YOUR_USERNAME") {
-                    player.src = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/main/${encodeURIComponent(event.data.file)}`;
-                } else {
-                    // Fallback to local link if file is run over a server or in a permissive browser environment
-                    player.src = event.data.file;
-                }
-                
+                // Relative path links hook directly since we're in a shared origin blob context!
+                player.src = event.data.file;
                 player.play().catch(function(err) {
                     console.error("Playback failed:", err);
-                    alert("Audio blocked or file missing! If running locally from your drive, please configure your GitHub details inside the script.");
                 });
             }
         });
@@ -283,7 +279,7 @@
             if(!codeViewer.value) return;
             codeViewer.select();
             navigator.clipboard.writeText(codeViewer.value);
-            alert('Code copied to your clipboard!');
+            alert('Code copied!');
         }
 
         window.onload = generateRandomWebsite;
