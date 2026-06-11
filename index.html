@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Random Website Generator</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --text-color: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--text-color);
+        }
+
+        h1 span {
+            color: var(--accent-color);
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: #0f172a;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #475569;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #334155;
+            position: relative;
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            background-color: #1e293b80;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: white;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            background-color: #020617;
+            color: #34d399;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem;
+            border: none;
+            resize: none;
+            outline: none;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Random <span>Site Generator</span></h1>
+        <button class="btn" onclick="generateRandomWebsite()">🎲 Generate New Site</button>
+    </header>
+
+    <div class="main-container">
+        <div class="panel">
+            <div class="panel-header">
+                <span>Source Code (HTML/CSS)</span>
+                <button class="btn btn-secondary" onclick="copyCode()">Copy Code</button>
+            </div>
+            <textarea id="codeViewer" readonly placeholder="Click 'Generate New Site' to build something crazy..."></textarea>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">Live Preview</div>
+            <iframe id="previewWindow" sandbox="allow-scripts"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Data banks for generation chaos
+        const niches = [
+            { name: "Cyberpunk Taco Stand", tagline: "Neo-Tokyo flavor, lightspeed delivery.", items: ["Neon Chorizo Taco", "Glitch Guacamole", "Synth-Asada Burrito"] },
+            { name: "Snail Speed Dating", tagline: "Find love at 0.03 miles per hour.", items: ["Slow-paced chats", "Shell matching algorithms", "Lettuce buffets"] },
+            { name: "Extreme Competitive Nap Association", tagline: "Synchronized sleeping at its finest.", items: ["Memory foam testing", "Snore pitch modulation", "Competitive drooling"] },
+            { name: "Wizard Tech Support", tagline: "Have you tried turning your wand off and on again?", items: ["Curse removal", "Mana router reboots", "Cloud scrying errors"] },
+            { name: "Alien Cow Abduction Agency", tagline: "We don't ask why, we just hoist bovine.", items: ["Premium tractor beams", "Crop circle designs", "Interstellar pasture transport"] }
+        ];
+
+        const colorPalettes = [
+            { bg: "#ff007f", primary: "#00f0ff", text: "#ffffff", cardBg: "#1a0033" }, // Cyber
+            { bg: "#f4f1de", primary: "#e07a5f", text: "#3d405b", cardBg: "#f2cc8f" }, // Retro Earth
+            { bg: "#0d1b2a", primary: "#e0e1dd", text: "#778da9", cardBg: "#415a77" }, // Deep Space
+            { bg: "#100007", primary: "#ff3333", text: "#ffcccc", cardBg: "#330011" }, // Vampire Minimalist
+            { bg: "#e6f8f2", primary: "#06d6a0", text: "#073b4c", cardBg: "#ffffff" }  // Fresh Mint
+        ];
+
+        const layouts = [
+            "brutalist", 
+            "minimal", 
+            "corporate-satire"
+        ];
+
+        function getRandomElement(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function generateRandomWebsite() {
+            const niche = getRandomElement(niches);
+            const palette = getRandomElement(colorPalettes);
+            const layout = getRandomElement(layouts);
+
+            // Shuffling lists for uniqueness
+            let featuresHTML = niche.items.map(item => `<li>✨ ${item}</li>`).join('\n            ');
+
+            let customCSS = '';
+            
+            // Generate layout variations based on selection
+            if (layout === "brutalist") {
+                customCSS = `
+                    body { background: ${palette.bg}; color: ${palette.text}; padding: 3rem; font-family: sans-serif; }
+                    .wrapper { border: 5px solid ${palette.text}; padding: 2rem; background: ${palette.cardBg}; box-shadow: 10px 10px 0px ${palette.primary}; }
+                    h1 { font-size: 3.5rem; text-transform: uppercase; border-bottom: 5px solid ${palette.text}; padding-bottom: 1rem; color: ${palette.primary}; }
+                    ul { list-style: none; margin-top: 2rem; }
+      
