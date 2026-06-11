@@ -213,15 +213,12 @@
             player.play().catch(function(err) { console.error(err); });
         };
 
-        // Strict fix: Handle target looping via dynamic input matching
+        // Handle target looping via dynamic input matching
         window.handleTextInputSecret = function(inputVal) {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
             
-            // Clean up text completely: turn lowercase, strip extra spaces
             var cleanText = inputVal.trim().toLowerCase().replace(/\s+/g, '');
-
-            // Match strings like "mp31.mp3" up to "mp310.mp3"
             var match = cleanText.match(/^mp3([1-9]|10)\.mp3$/);
 
             if (match) {
@@ -236,14 +233,12 @@
 
                 if (status) status.innerText = "🔄 Looping: " + trackName;
 
-                // Only load if it isn't currently playing this exact track
                 if (!player.src.endsWith(encodeURIComponent(trackName))) {
                     player.src = trackName;
                     player.load();
                     player.play().catch(function(err) { console.error("Loop failed:", err); });
                 }
             } else if (cleanText === "") {
-                // Instantly kill loops if they empty the box
                 player.pause();
                 player.loop = false;
                 if (status) status.innerText = "";
@@ -269,18 +264,17 @@
                 <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">${rand(phrases)}</p>
             `;
 
-            // Always render the status container so text loops don't crash when button isn't generated
             structuralContent += `
                 <div style="margin-bottom: 20px; font-family: '${selectedFont}', sans-serif;">
                     <p id="audioStatus" style="font-size:1rem; font-weight:bold; color:${textColor}; min-height: 1.2em;"></p>
                 </div>\n`;
 
-            // 1/2 Chance text box appears
+            // 1/2 Chance text box appears (Placeholder string updated here)
             if (Math.random() < 0.5) {
                 structuralContent += `
                 <div style="margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">
                     <label style="display:block; margin-bottom:5px; color:${textColor}; font-weight:bold;">Secret Audio Input Field:</label>
-                    <input type="text" oninput="window.handleTextInputSecret(this.value)" placeholder="Type 'MP3 9.mp3' to repeat a track..." style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
+                    <input type="text" oninput="window.handleTextInputSecret(this.value)" placeholder="Just type random gibberish in here" style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
                 </div>\n`;
             }
 
