@@ -145,8 +145,9 @@
         </div>
     </div>
 
+    <audio id="masterAudioPlayer"></audio>
+
     <script>
-        // Chaotic vocabulary banks for purely random generation
         const words = ["Quantum", "Glitch", "Matrix", "Cyber", "Void", "Omega", "Hyper", "Alpha", "Delta", "Turbo", "Cosmic", "Phantom", "Solar", "Static", "Cryptic"];
         const nouns = ["Portal", "System", "Node", "Network", "Beacon", "Core", "Module", "Vortex", "Grid", "Terminal", "Buffer", "Array", "Engine", "Console"];
         const phrases = [
@@ -156,7 +157,7 @@
             "Welcome to the fallback terminal node.",
             "Unidentified protocols have been successfully initiated."
         ];
-        const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS", "Trebuchet MS"];
+        const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS"];
 
         function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
         function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -171,13 +172,12 @@
             
             const siteTitle = `${rand(words)} ${rand(nouns)}`;
             
-            // Generate a random mix of paragraphs and headings
             let structuralContent = `
                 <h1 style="color: ${headingColor}; font-size: ${randRange(2, 4)}rem; margin-bottom: 15px;">${siteTitle}</h1>
                 <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px;">${rand(phrases)}</p>
             `;
 
-            // Rule 1: 1/2 (50%) chance of a text box appearing
+            // 1/2 Chance of input text box appearing
             if (Math.random() < 0.5) {
                 structuralContent += `
                 <div style="margin-bottom: 25px;">
@@ -186,19 +186,18 @@
                 </div>\n`;
             }
 
-            // Rule 2: 1/4 (25%) chance of a play button playing 1 of 10 MP3s at random
+            // 1/4 Chance of local MP3 random play button appearing
             if (Math.random() < 0.25) {
                 structuralContent += `
                 <div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block;">
                     <p style="color: ${textColor}; font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🎵 Audio Node Trigger Detected</p>
-                    <button onclick="playRandomLocalMP3()" style="background: ${headingColor}; color: #fff; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000;">
+                    <button onclick="requestAudioPlay()" style="background: ${headingColor}; color: #fff; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000;">
                         ▶ Play Random MP3
                     </button>
                     <p id="audioStatus" style="font-size:0.8rem; margin-top:5px; color:${textColor}; opacity:0.8;"></p>
                 </div>\n`;
             }
 
-            // Compile the total page code package
             const generatedCode = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -232,37 +231,38 @@
         ${structuralContent.trim()}
     </div>
 
-    <audio id="localChaosPlayer"></audio>
-
     <script>
-        function playRandomLocalMP3() {
-            var player = document.getElementById('localChaosPlayer');
-            var status = document.getElementById('audioStatus');
-            
-            // Randomly select an integer index between 1 and 10
+        // Communicates out of the sandbox to tell parent layout to run the file
+        function requestAudioPlay() {
             var trackNumber = Math.floor(Math.random() * 10) + 1;
-            var targetTrackName = "MP3 " + trackNumber + ".mp3";
+            var trackName = "MP3 " + trackNumber + ".mp3";
             
-            status.innerText = "Playing: " + targetTrackName;
+            document.getElementById('audioStatus').innerText = "Playing: " + trackName;
             
-            player.src = targetTrackName;
-            player.play().catch(function(err) {
-                status.innerText = "Error: Ensure '" + targetTrackName + "' is inside this folder!";
-                console.log(err);
-            });
+            // Send track event window up
+            window.parent.postMessage({ action: 'play_mp3', file: trackName }, '*');
         }
     <\/script>
 
 </body>
 </html>`;
 
-            // Display raw text in left panel
             document.getElementById('codeViewer').value = generatedCode;
 
-            // Deliver safely to the preview window using the Data URL framework
             const iframe = document.getElementById('previewWindow');
             iframe.src = "data:text/html;charset=utf-8," + encodeURIComponent(generatedCode);
         }
+
+        // Bridge Listener: intercepts request from the preview panel and plays local sound
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.action === 'play_mp3') {
+                var player = document.getElementById('masterAudioPlayer');
+                player.src = event.data.file;
+                player.play().catch(function(err) {
+                    console.error("Local play failure:", err);
+                });
+            }
+        });
 
         function copyCode() {
             const codeViewer = document.getElementById('codeViewer');
@@ -272,7 +272,6 @@
             alert('Code copied to your clipboard!');
         }
 
-        // Fire off initial render instantly
         window.onload = generateRandomWebsite;
     </script>
 </body>
