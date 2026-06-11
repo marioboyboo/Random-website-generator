@@ -128,7 +128,6 @@
             padding: 20px;
         }
 
-        /* Mobile Responsive Layout Split */
         @media (max-width: 768px) {
             body { overflow: auto; height: auto; min-height: 100vh; }
             .main-container { flex-direction: column; height: auto; overflow: visible; }
@@ -158,7 +157,7 @@
         </div>
     </div>
 
-    <audio id="masterAudioPlayer" preload="auto"></audio>
+    <audio id="masterAudioPlayer" preload="auto" crossorigin="anonymous"></audio>
 
     <script>
         const words = ["Quantum", "Glitch", "Matrix", "Cyber", "Void", "Omega", "Hyper", "Alpha", "Delta", "Turbo", "Cosmic", "Phantom", "Solar", "Static", "Cryptic"];
@@ -176,8 +175,25 @@
         function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
         function randColor() { return `hsl(${randRange(0, 360)}, ${randRange(50, 95)}%, ${randRange(30, 70)}%)`; }
 
-        // Global function directly available to the live preview canvas buttons
-        // FIX: Directly executes inside the user's tap timeline to clear Android security walls
+        let audioCtx = null;
+        let gainNode = null;
+        let sourceNode = null;
+
+        // Base setup helper to initialize the mixer
+        function initAudioPipeline(player) {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioCtx.createGain();
+                sourceNode = audioCtx.createMediaElementSource(player);
+                sourceNode.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Handles regular button clicks (Random Play, Non-looping)
         window.parentPlayAudio = function() {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
@@ -185,23 +201,62 @@
             var trackNumber = Math.floor(Math.random() * 10) + 1;
             var trackName = "MP3 " + trackNumber + ".mp3";
             
+            initAudioPipeline(player);
+            player.loop = false; // Regular clicks do not loop
+
+            if (trackNumber === 9) { gainNode.gain.value = 2.0; } 
+            else { gainNode.gain.value = 1.0; }
+            
             if (status) status.innerText = "Playing: " + trackName;
             
             player.src = trackName;
-            
-            // Explicitly call load() to force mobile data pipes open
             player.load(); 
-            
-            var playPromise = player.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(function(err) {
-                    if (status) status.innerText = "Tap again to play audio!";
-                    console.error("Android playback issue:", err);
-                });
+            player.play().catch(function(err) { console.error(err); });
+        };
+
+        // NEW: Handles the text input magic trick (Triggers looping file playback)
+        window.handleTextInputSecret = function(inputVal) {
+            var player = document.getElementById('masterAudioPlayer');
+            var status = document.getElementById('audioStatus');
+            var trimmedVal = inputVal.trim();
+
+            // Match pattern like "MP3 1.mp3" through "MP3 10.mp3" (case insensitive)
+            var match = trimmedVal.match(/^mp3\s+([1-9]|10)\.mp3$/i);
+
+            if (match) {
+                var trackNumber = parseInt(match[1]);
+                var trackName = "MP3 " + trackNumber + ".mp3";
+
+                initAudioPipeline(player);
+                player.loop = true; // Turn on continuous looping
+
+                if (trackNumber === 9) { gainNode.gain.value = 2.0; } 
+                else { gainNode.gain.value = 1.0; }
+
+                if (status) status.innerText = "Looping: " + trackName;
+
+                // Only reload and change source if it's not already playing this loop track
+                if (!player.src.endsWith(encodeURIComponent(trackName))) {
+                    player.src = trackName;
+                    player.load();
+                    player.play().catch(function(err) { console.error(err); });
+                }
+            } else if (trimmedVal === "") {
+                // If text is cleared out, halt music loops
+                player.pause();
+                player.loop = false;
+                if (status) status.innerText = "";
             }
         };
 
         function generateRandomWebsite() {
+            // Force reset any active background audio loop whenever a brand new site is generated
+            var player = document.getElementById('masterAudioPlayer');
+            if (player) {
+                player.pause();
+                player.loop = false;
+            }
+
             const headingColor = randColor();
             const textColor = randColor();
             const panelBg = randColor();
@@ -214,13 +269,21 @@
                 <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">${rand(phrases)}</p>
             `;
 
+            // 1/2 Chance text box appears
             if (Math.random() < 0.5) {
                 structuralContent += `
                 <div style="margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">
-                    <label style="display:block; margin-bottom:5px; color:${textColor}; font-weight:bold;">Random Input Field:</label>
-                    <input type="text" placeholder="Type something completely random here..." style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
+                    <label style="display:block; margin-bottom:5px; color:${textColor}; font-weight:bold;">Secret Audio Input Field:</label>
+                    <input type="text" oninput="window.handleTextInputSecret(this.value)" placeholder="Type 'MP3 9.mp3' to repeat a track..." style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
                 </div>\n`;
             }
+
+            // 1/4 Chance MP3 button appears
+            // Added a fallback status element container so even if the button doesn't spawn, the input box loop text can display!
+            structuralContent += `
+                <div style="margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">
+                    <p id="audioStatus" style="font-size:0.9rem; font-weight:bold; color:${textColor}; opacity:0.9;"></p>
+                </div>\n`;
 
             if (Math.random() < 0.25) {
                 structuralContent += `
@@ -229,7 +292,6 @@
                     <button onclick="window.parentPlayAudio()" style="background: ${headingColor}; color: #fff; border: none; padding: 12px 24px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000; font-size: 1rem;">
                         ▶ Play Random MP3
                     </button>
-                    <p id="audioStatus" style="font-size:0.8rem; margin-top:5px; color:${textColor}; opacity:0.8;"></p>
                 </div>\n`;
             }
 
@@ -262,19 +324,65 @@
 </head>
 <body>
     <div class="container">
-        ${structuralContent.trim().replace('onclick="window.parentPlayAudio()"', 'onclick="playRandomLocalMP3()"')}
+        ${structuralContent.trim().replace('oninput="window.handleTextInputSecret(this.value)"', 'oninput="playLocalLoopMP3(this.value)"').replace('onclick="window.parentPlayAudio()"', 'onclick="playRandomLocalMP3()"')}
     </div>
 
-    <audio id="localChaosPlayer"></audio>
+    <audio id="localChaosPlayer" crossorigin="anonymous"></audio>
     <script>
+        var audioCtx = null;
+        var gainNode = null;
+        var sourceNode = null;
+
+        function initAudio(player) {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioCtx.createGain();
+                sourceNode = audioCtx.createMediaElementSource(player);
+                sourceNode.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+        }
+
         function playRandomLocalMP3() {
             var player = document.getElementById('localChaosPlayer');
             var status = document.getElementById('audioStatus');
             var trackNumber = Math.floor(Math.random() * 10) + 1;
             var targetTrackName = "MP3 " + trackNumber + ".mp3";
-            status.innerText = "Playing: " + targetTrackName;
+            
+            initAudio(player);
+            player.loop = false;
+            if (trackNumber === 9) { gainNode.gain.value = 2.0; } else { gainNode.gain.value = 1.0; }
+            
+            if (status) status.innerText = "Playing: " + targetTrackName;
             player.src = targetTrackName;
             player.play().catch(function(err) { console.log(err); });
+        }
+
+        function playLocalLoopMP3(inputVal) {
+            var player = document.getElementById('localChaosPlayer');
+            var status = document.getElementById('audioStatus');
+            var trimmed = inputVal.trim();
+            var match = trimmed.match(/^mp3\\s+([1-9]|10)\\.mp3$/i);
+
+            if (match) {
+                var trackNumber = parseInt(match[1]);
+                var targetTrackName = "MP3 " + trackNumber + ".mp3";
+                
+                initAudio(player);
+                player.loop = true;
+                if (trackNumber === 9) { gainNode.gain.value = 2.0; } else { gainNode.gain.value = 1.0; }
+                
+                if (status) status.innerText = "Looping: " + targetTrackName;
+                if (!player.src.endsWith(encodeURIComponent(targetTrackName))) {
+                    player.src = targetTrackName;
+                    player.play().catch(function(err) { console.log(err); });
+                }
+            } else if (trimmed === "") {
+                player.pause();
+                player.loop = false;
+                if (status) status.innerText = "";
+            }
         }
     <\/script>
 </body>
