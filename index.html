@@ -150,7 +150,7 @@
             padding: 20px;
         }
 
-        /* MODAL CORES */
+        /* MODAL LAYER PACKAGING */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(4px);
@@ -159,8 +159,9 @@
 
         .hostile-slider-box {
             background: #1e293b; border: 3px solid #ef4444; padding: 25px;
-            border-radius: 12px; width: 100%; max-width: 420px; text-align: left;
+            border-radius: 12px; width: 100%; max-width: 440px; text-align: left;
             box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5); color: #fff;
+            position: relative; overflow: hidden;
         }
 
         .hostile-slider-box label {
@@ -185,10 +186,26 @@
         }
 
         .interactive-btn {
-            background: #ef4444; color: #fff; padding: 8px 12px; border: none;
-            border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 0.85rem;
+            background: #ef4444; color: #fff; padding: 10px 14px; border: none;
+            border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 0.85rem;
         }
         .interactive-btn:hover { opacity: 0.9; }
+
+        /* ADVANCED CHAOS ELEMENT INTERFACES */
+        .tos-scroller {
+            height: 120px; overflow-y: scroll; background: #020617; 
+            border: 1px solid #475569; padding: 10px; font-size: 0.75rem; 
+            color: #94a3b8; font-family: monospace; margin-top: 5px;
+        }
+        .tos-page-marker {
+            background: #334155; padding: 2px 6px; font-size: 0.65rem; color: #fff; font-weight: bold;
+        }
+        .runaway-container {
+            position: relative; width: 100%; height: 140px; background: #020617; border-radius: 6px; overflow: hidden; margin-top: 5px;
+        }
+        .runaway-btn {
+            position: absolute; left: 40%; top: 40%; transition: none; padding: 6px 12px; background: #ef4444; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+        }
 
         @media (max-width: 768px) {
             body { overflow: auto; height: auto; min-height: 100vh; }
@@ -248,26 +265,32 @@
     <script>
         const words = ["Quantum", "Glitch", "Matrix", "Cyber", "Void", "Omega", "Hyper", "Alpha", "Delta", "Turbo", "Cosmic", "Phantom", "Solar", "Static", "Cryptic"];
         const nouns = ["Portal", "System", "Node", "Network", "Beacon", "Core", "Module", "Vortex", "Grid", "Terminal", "Buffer", "Array", "Engine", "Console"];
-        const phrases = ["System calibration is currently underway.","Data stream injection has reached maximum capacity.","Welcome to the fallback terminal node.","Unidentified protocols have been successfully initiated.","Processing structural chaos elements..."];
+        const phrases = ["System calibration underway.","Data stream injection reached maximum capacity.","Welcome to the fallback terminal node.","Unidentified protocols initiated.","Processing structural chaos elements..."];
         const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS"];
         const PI_STRING = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679";
 
         let currentSeed = 1;
-        let activeVolumeSystemType = 0; // 0 to 7 now!
+        let activeVolumeSystemType = 0; // Out of 14 possibilities now!
 
         let globalVolumeMultiplier = 0.5; 
+        let savedPreMuteVolume = 0.5;
         let trackBaseVolume = 1.0;
 
-        // Loop management
+        // Loop management tickers
         let globalLoopInterval = null;
         let sliderTime = 0;
         let baseDriftSpeed = 0.05;
         let isUserDraggingSlider = false;
 
-        // Mode specific runtime states
+        // Mode specific runtime registers
         let launchVelocity = 0;
         let tiltBalance = 50;
         let tiltVelocity = 0;
+        let fadeInterval = null;
+        let bufferProgress = 0;
+        let bufferInterval = null;
+        let adProgress = 0;
+        let adInterval = null;
 
         function seededRandom() {
             currentSeed = (currentSeed * 1664525 + 1013904223) % 4294967296;
@@ -296,7 +319,8 @@
 
         window.openHostileVolumeModal = function() {
             let workingSeed = parseInt(document.getElementById('currentSeedDisplay').innerText) || 123456;
-            activeVolumeSystemType = workingSeed % 8; // Split into 8 individual modes matching the video clip!
+            // Mode assignment calculated out across a matrix of 14 separate engines!
+            activeVolumeSystemType = workingSeed % 14; 
 
             document.getElementById('hostileModalOverlay').style.display = 'flex';
             renderActiveVolumeUIElement();
@@ -306,15 +330,21 @@
         window.closeHostileVolumeModal = function() {
             document.getElementById('hostileModalOverlay').style.display = 'none';
             if (globalLoopInterval) clearInterval(globalLoopInterval);
+            cleanMuteTimers();
         };
+
+        function cleanMuteTimers() {
+            if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
+            if (bufferInterval) { clearInterval(bufferInterval); bufferInterval = null; }
+            if (adInterval) { clearInterval(adInterval); adInterval = null; }
+        }
 
         function startModalLoopPhysics() {
             if (globalLoopInterval) clearInterval(globalLoopInterval);
             
             globalLoopInterval = setInterval(function() {
-                if (activeVolumeSystemType === 0) { // Mode 0: Drift
-                    var slider = document.getElementById('annoyingVolumeControl');
-                    if (!slider) return;
+                if (activeVolumeSystemType === 0) { // Mode 0: Drift Slider
+                    var slider = document.getElementById('annoyingVolumeControl'); if (!slider) return;
                     sliderTime += baseDriftSpeed;
                     if (isUserDraggingSlider) {
                         slider.value = Math.max(0, Math.min(100, parseFloat(slider.value) + (Math.sin(sliderTime * 15) * 4)));
@@ -323,48 +353,38 @@
                     }
                     globalVolumeMultiplier = parseFloat(slider.value) / 100;
                 }
-                else if (activeVolumeSystemType === 1) { // Mode 1: Velocity launcher
+                else if (activeVolumeSystemType === 1) { // Mode 1: Rocket Launcher
                     var slider = document.getElementById('velocitySlider');
                     if(slider && launchVelocity !== 0) {
                         let cur = parseFloat(slider.value) + launchVelocity;
-                        if(cur >= 100 || cur <= 0) launchVelocity = -launchVelocity; // Bounce violently
+                        if(cur >= 100 || cur <= 0) launchVelocity = -launchVelocity; 
                         slider.value = Math.max(0, Math.min(100, cur));
                         globalVolumeMultiplier = parseFloat(slider.value) / 100;
                     }
                 }
-                else if (activeVolumeSystemType === 2) { // Mode 2: Tilt physics
-                    tiltVelocity += (Math.random() * 0.4 - 0.2); // Random gravity tilt shift
-                    tiltBalance += tiltVelocity;
+                else if (activeVolumeSystemType === 2) { // Mode 2: Balance Beam
+                    tiltVelocity += (Math.random() * 0.4 - 0.2); tiltBalance += tiltVelocity;
                     var slider = document.getElementById('tiltSlider');
-                    if(slider) {
-                        slider.value = Math.max(0, Math.min(100, tiltBalance));
-                        globalVolumeMultiplier = parseFloat(slider.value) / 100;
-                    }
-                    if(tiltBalance <= 0 || tiltBalance >= 100) tiltVelocity = -tiltVelocity * 0.5; // Bounce off walls
+                    if(slider) { slider.value = Math.max(0, Math.min(100, tiltBalance)); globalVolumeMultiplier = parseFloat(slider.value) / 100; }
+                    if(tiltBalance <= 0 || tiltBalance >= 100) tiltVelocity = -tiltVelocity * 0.5;
                 }
-                else if (activeVolumeSystemType === 3) { // Mode 3: Constant Deflation Pump
+                else if (activeVolumeSystemType === 3) { // Mode 3: Pneumatic Valve Leakage
                     globalVolumeMultiplier = Math.max(0, globalVolumeMultiplier - 0.006);
-                    var slider = document.getElementById('pumpSlider');
-                    if(slider) slider.value = Math.round(globalVolumeMultiplier * 100);
+                    var slider = document.getElementById('pumpSlider'); if(slider) slider.value = Math.round(globalVolumeMultiplier * 100);
                 }
-
                 updateFinalHardwareVolume();
             }, 30);
         }
 
-        // Mode specific element handlers called from bindings
+        // Original operational slider bindings
         window.handleSliderGrab = function() { isUserDraggingSlider = true; };
-        window.handleSliderRelease = function() {
-            isUserDraggingSlider = false;
-            baseDriftSpeed = (Math.random() * 0.15) - 0.075;
-        };
+        window.handleSliderRelease = function() { isUserDraggingSlider = false; baseDriftSpeed = (Math.random() * 0.15) - 0.075; };
         window.launchVolumeVelocity = function() { launchVelocity = (Math.random() * 6) + 3; };
         window.freezeVolumeVelocity = function() { launchVelocity = 0; };
         window.tiltLeft = function() { tiltVelocity -= 1.5; };
         window.tiltRight = function() { tiltVelocity += 1.5; };
         window.pumpUpVolume = function() { globalVolumeMultiplier = Math.min(1.0, globalVolumeMultiplier + 0.12); };
         window.handleRadioMatrixChange = function(v) { globalVolumeMultiplier = parseInt(v)/100; updateFinalHardwareVolume(); };
-        
         window.handlePiVolumeInput = function(el) {
             let val = el.value;
             if (val === "") { globalVolumeMultiplier = 0; }
@@ -372,78 +392,223 @@
             else { globalVolumeMultiplier = 0.01; el.style.borderColor = "#ef4444"; }
             updateFinalHardwareVolume();
         };
-
         window.handleTextVolumeInput = function(el) {
-            let textMap = {"zero":0,"one":1,"ten":10,"twenty":20,"thirty":30,"forty":40,"fifty":50,"sixty":60,"seventy":70,"eighty":80,"ninety":90,"one hundred":100};
+            let textMap = {"zero":0,"one":1,"ten":10,"twenty":20,"thirty":30,"forty":40,"fifty":50,"one hundred":100};
             let cleaned = el.value.trim().toLowerCase();
-            if(textMap[cleaned] !== undefined) {
-                globalVolumeMultiplier = textMap[cleaned] / 100; el.style.borderColor = "#34d399";
-            } else { el.style.borderColor = "#ef4444"; }
+            if(textMap[cleaned] !== undefined) { globalVolumeMultiplier = textMap[cleaned] / 100; el.style.borderColor = "#34d399"; }
+            else { el.style.borderColor = "#ef4444"; }
             updateFinalHardwareVolume();
+        };
+        window.rollFaithDice = function() {
+            let d1 = Math.floor(Math.random() * 6) + 1; let d2 = Math.floor(Math.random() * 6) + 1; alert(`Rolled: ${d1} & ${d2}!`);
+            globalVolumeMultiplier = ((d1 + d2) * 8.3) / 100; updateFinalHardwareVolume();
         };
 
-        window.rollFaithDice = function() {
-            let d1 = Math.floor(Math.random() * 6) + 1;
-            let d2 = Math.floor(Math.random() * 6) + 1;
-            alert(`You rolled a ${d1} and a ${d2}!`);
-            globalVolumeMultiplier = ((d1 + d2) * 8.3) / 100;
-            updateFinalHardwareVolume();
+        /* ================= NEW EXPLICITLY HOSTILE MUTE HANDLERS ================= */
+        
+        // Mode 8: Fade out 45 seconds or spike back instantly
+        window.triggerFadeToBlackMute = function() {
+            if (fadeInterval) {
+                // Impatient double click detected! Spike straight back to 100% volume
+                clearInterval(fadeInterval); fadeInterval = null;
+                globalVolumeMultiplier = 1.0; updateFinalHardwareVolume();
+                alert("🔴 Impatience detected! Audio spikes back to 100%!");
+                return;
+            }
+            savedPreMuteVolume = globalVolumeMultiplier;
+            fadeInterval = setInterval(function() {
+                globalVolumeMultiplier = Math.max(0, globalVolumeMultiplier - (1 / 450)); // Fade out over 45 seconds roughly
+                updateFinalHardwareVolume();
+                if (globalVolumeMultiplier <= 0) { clearInterval(fadeInterval); fadeInterval = null; }
+            }, 100);
         };
+
+        // Mode 9: Terms Of Service Page Parser Tracking Matrix
+        window.handleTosScroll = function(element) {
+            let pageIndicator = document.getElementById('tosPageTracker');
+            let box = document.getElementById('tosAgreementForm');
+            if(!pageIndicator) return;
+
+            // Approximate conversion metrics across continuous scroll length
+            let pct = element.scrollTop / (element.scrollHeight - element.clientHeight);
+            let page = Math.floor(pct * 120) + 1;
+            pageIndicator.innerText = page;
+
+            if (page === 84) {
+                pageIndicator.style.background = "#34d399";
+                if(box) box.style.display = "block";
+            } else {
+                pageIndicator.style.background = "#ef4444";
+                if(box) box.style.display = "none";
+                if(page > 84) {
+                    // Blew straight past Page 84. Structural penalties applied.
+                    element.scrollTop = 0; 
+                    alert("⚠️ You scroll past Page 84! The document forcefully auto-rewinds to page 1!");
+                }
+            }
+        };
+        window.confirmTosMuteSilence = function() {
+            let c1 = document.getElementById('tosC1').checked;
+            let c2 = document.getElementById('tosC2').checked;
+            let c3 = document.getElementById('tosC3').checked;
+            if (c1 && c2 && c3) {
+                globalVolumeMultiplier = 0; updateFinalHardwareVolume(); alert("🔇 Silence granted under subsection 84-B.");
+            } else { alert("You left legal checkmarks completely blank!"); }
+        };
+
+        // Mode 10: Energy Harvester Mouse Locks
+        window.captureAudioHostage = function() { globalVolumeMultiplier = 0; updateFinalHardwareVolume(); };
+        window.releaseAudioHostage = function() { globalVolumeMultiplier = 1.0; updateFinalHardwareVolume(); };
+
+        // Mode 11: Buffer Engine Simulation Channels
+        window.loadSilenceBuffer = function() {
+            if(bufferInterval) return;
+            bufferProgress = 0;
+            var label = document.getElementById('bufferLabel');
+            bufferInterval = setInterval(function() {
+                // Introduce synthetic drops to build irritation profile
+                if (Math.random() < 0.12) {
+                    if (label) label.innerText = "❌ Connection Dropped... Mute Aborted!";
+                    clearInterval(bufferInterval); bufferInterval = null;
+                    globalVolumeMultiplier = 1.0; updateFinalHardwareVolume();
+                    return;
+                }
+                bufferProgress += randRange(2, 8);
+                if (bufferProgress >= 100) {
+                    bufferProgress = 100; clearInterval(bufferInterval); bufferInterval = null;
+                    globalVolumeMultiplier = 0;
+                }
+                if (label) label.innerText = "Buffering Silence... " + bufferProgress + "%";
+                updateFinalHardwareVolume();
+            }, 250);
+        };
+
+        // Mode 12: Polar Runaway Button Traps
+        window.evadeCursorAction = function(btn) {
+            let box = btn.parentElement;
+            let maxX = box.clientWidth - btn.clientWidth;
+            let maxY = box.clientHeight - btn.clientHeight;
+            // Force random vector escape hops away from coordinates
+            btn.style.left = Math.floor(Math.random() * maxX) + "px";
+            btn.style.top = Math.floor(Math.random() * maxY) + "px";
+        };
+        window.clickRunawayMute = function() { globalVolumeMultiplier = 0; updateFinalHardwareVolume(); alert("🔇 Caught it! Audio muted."); };
+
+        // Mode 13: Advertising Injection Streams
+        window.fireCommercialStream = function() {
+            if(adInterval) return;
+            adProgress = 30;
+            globalVolumeMultiplier = 1.0; // Play commercial at absolute maximum capacity limits
+            updateFinalHardwareVolume();
+            var btn = document.getElementById('adButtonTrigger');
+            adInterval = setInterval(function() {
+                adProgress--;
+                if(btn) btn.innerText = "Ad Playing Loudly... (" + adProgress + "s left)";
+                if(adProgress <= 0) {
+                    clearInterval(adInterval); adInterval = null;
+                    globalVolumeMultiplier = 0; updateFinalHardwareVolume();
+                    if(btn) btn.innerText = "✅ Unlocked: Muted!";
+                }
+            }, 100);
+        };
+
 
         function buildVolumeSystemHTML() {
             let curVal = Math.round(globalVolumeMultiplier * 100);
             let html = "";
             
             switch(activeVolumeSystemType) {
-                case 0: // Sinusoidal Drift
+                // --- ORIGINAL 8 HARDWARE MODES ---
+                case 0:
                     html += `<label>⚠️ MODE 1: SINUSOIDAL DRIFT SLIDER</label>
                              <input type="range" id="annoyingVolumeControl" class="annoying-slider" min="0" max="100" value="${curVal}" onmousedown="window.handleSliderGrab()" onmouseup="window.handleSliderRelease()" ontouchstart="window.handleSliderGrab()" ontouchend="window.handleSliderRelease()">`;
                     break;
-                case 1: // Launch speed
+                case 1:
                     html += `<label>⚠️ MODE 2: VELOCITY ROCKET ACCELERATOR</label>
                              <input type="range" id="velocitySlider" class="annoying-slider" min="0" max="100" value="${curVal}" disabled>
                              <button class="interactive-btn" onclick="window.launchVolumeVelocity()">🚀 Launch Engine</button>
                              <button class="interactive-btn" style="background:#34d399; color:#000;" onclick="window.freezeVolumeVelocity()">🛑 Freeze Level</button>`;
                     break;
-                case 2: // Tilt gravity balance
+                case 2:
                     html += `<label>⚠️ MODE 3: TILT BALANCE ACCELERATION BEAM</label>
                              <input type="range" id="tiltSlider" class="annoying-slider" min="0" max="100" value="${curVal}" disabled>
                              <button class="interactive-btn" onclick="window.tiltLeft()">◀ Tilt Left</button>
                              <button class="interactive-btn" onclick="window.tiltRight()">Tilt Right ▶</button>`;
                     break;
-                case 3: // Pneumatic pump
+                case 3:
                     html += `<label>⚠️ MODE 4: PNEUMATIC LEAKING PUMP VALVE</label>
                              <input type="range" id="pumpSlider" class="annoying-slider" min="0" max="100" value="${curVal}" disabled>
                              <button class="interactive-btn" style="width:100%; padding:12px;" onclick="window.pumpUpVolume()">🪠 Mash to Pump Volume Up</button>`;
                     break;
-                case 4: // Pi input
+                case 4:
                     html += `<label>⚠️ MODE 5: CRYPTOGRAPHIC PI VALIDATOR</label>
-                             <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:4px;">Type string digits of Pi (3.14159...) to grow scale limits.</div>
                              <input type="text" class="text-input-field" placeholder="3.1415..." oninput="window.handlePiVolumeInput(this)">`;
                     break;
-                case 5: // English Text entry
+                case 5:
                     html += `<label>⚠️ MODE 6: ALPHABETIC LITERAL STATEMENT PARSER</label>
-                             <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:4px;">Type literal bounds matching keys: "zero", "ten", "twenty", "fifty", "one hundred"</div>
-                             <input type="text" class="text-input-field" placeholder="Type word volume value..." oninput="window.handleTextVolumeInput(this)">`;
+                             <input type="text" class="text-input-field" placeholder="Type words: 'ten', 'twenty', 'fifty'..." oninput="window.handleTextVolumeInput(this)">`;
                     break;
-                case 6: // Discrete Matrix
-                    html += `<label>⚠️ MODE 7: DISCRETE ELEMENT MATRIX GRID</label>
-                             <div class="radio-grid-container">`;
+                case 6:
+                    html += `<label>⚠️ MODE 7: DISCRETE ELEMENT MATRIX GRID</label><div class="radio-grid-container">`;
                     for (let i = 1; i <= 100; i++) {
                         let checked = curVal === i ? "checked" : "";
                         html += `<div class="radio-item"><input type="radio" name="annoyingRadioVol" value="${i}" ${checked} onchange="window.handleRadioMatrixChange(this.value)">${i}</div>`;
                     }
                     html += `</div>`;
                     break;
-                case 7: // Dice roll
+                case 7:
                     html += `<label>⚠️ MODE 8: DICE ROLL OF BLIND FAITH</label>
-                             <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">Volume allocation is determined completely by throwing fate dice.</div>
-                             <button class="interactive-btn" style="width:100%; padding:15px; background:#8b5cf6;" onclick="window.rollFaithDice()">🎲 Roll Dice</button>`;
+                             <button class="interactive-btn" style="width:100%; padding:12px; background:#8b5cf6;" onclick="window.rollFaithDice()">🎲 Roll Dice</button>`;
+                    break;
+
+                // --- NEW EXPLICITLY REQUESTED CRUEL MUTE MECHANICS ---
+                case 8:
+                    html += `<label>⚠️ MUTE MODE 1: THE FADE TO BLACK SYSTEM</label>
+                             <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px;">Triggers an agonizing 45-second slow audio fade out. Hitting it out of impatience spikes volume back to 100% immediately.</p>
+                             <button class="interactive-btn" style="width:100%; background:#f59e0b;" onclick="window.triggerFadeToBlackMute()">🔇 Initiate Slow Mute Sequence</button>`;
+                    break;
+                case 9:
+                    html += `<label>⚠️ MUTE MODE 2: TERMS OF SERVICE CONTRAPTION</label>
+                             <p style="font-size:0.75rem; color:#94a3b8;">Scroll precisely to <span id="tosPageTracker" class="tos-page-marker">1</span> to unlock validation checkmarks. Exceeding page 84 breaks document boundaries completely.</p>
+                             <div class="tos-scroller" onscroll="window.handleTosScroll(this)">
+                                 --- START SOUND PRIVACY AGREEMENT ---<br>
+                                 ${Array.from({length:130}, (_,i) => `[PARAGRAPH ${i+1}] Under subsection ${i*3}, user forfeits claims to immediate acoustic audio silences... Section page tracking data stream confirmation row lines.<br><br>`).join('')}
+                                 --- END OF SETTLEMENT MATRIX ---
+                             </div>
+                             <div id="tosAgreementForm" style="display:none; background:rgba(0,0,0,0.3); padding:8px; margin-top:5px; border-radius:4px; font-size:0.7rem;">
+                                 <input type="checkbox" id="tosC1"> I wave speaker rights<br>
+                                 <input type="checkbox" id="tosC2"> I accept the silence penalty<br>
+                                 <input type="checkbox" id="tosC3"> Sign signature node<br>
+                                 <button class="interactive-btn" style="padding:4px 8px; font-size:0.7rem; background:#34d399; color:#000;" onclick="window.confirmTosMuteSilence()">Execute Silence Agreement</button>
+                             </div>`;
+                    break;
+                case 10:
+                    html += `<label>⚠️ MUTE MODE 3: THE ENERGY HARVESTER DECREE</label>
+                             <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px;">Audio is muted ONLY while you actively click and hold this panel down. Letting go instantly screams back to full blast maximum volume output levels.</p>
+                             <button class="interactive-btn" style="width:100%; padding:20px; background:#ec4899;" onmousedown="window.captureAudioHostage()" onmouseup="window.releaseAudioHostage()" ontouchstart="window.captureAudioHostage()" ontouchend="window.releaseAudioHostage()">✊ HOLD DOWN DOWN TO PIN AUDIO SILENT</button>`;
+                    break;
+                case 11:
+                    html += `<label>⚠️ MUTE MODE 4: PACKET BUFFER LOSS SIMULATION</label>
+                             <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px;">Silence is a heavy data asset that must be actively buffered down from server hubs.</p>
+                             <div id="bufferLabel" style="font-family:monospace; font-size:0.8rem; color:#38bdf8; margin-bottom:6px;">Idle... Connection Ready</div>
+                             <button class="interactive-btn" style="width:100%; background:#06b6d4;" onclick="window.loadSilenceBuffer()">🔄 Buffer Silence Asset Packet</button>`;
+                    break;
+                case 12:
+                    html += `<label>⚠️ MUTE MODE 5: REVERSE POLAR RUNAWAY MAGNET</label>
+                             <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:4px;">The layout button actively flees your mouse pointer tracks coordinate vector spaces.</p>
+                             <div class="runaway-container">
+                                 <button class="runaway-btn" onmouseover="window.evadeCursorAction(this)" onclick="window.clickRunawayMute()">MUTE</button>
+                             </div>`;
+                    break;
+                case 13:
+                    html += `<label>⚠️ MUTE MODE 6: SPONSORED ADVERT AD MATRIX</label>
+                             <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px;">To activate channel mute paths, you must sit through a high-decibel 30-second commercial payload sequence.</p>
+                             <button id="adButtonTrigger" class="interactive-btn" style="width:100%; padding:15px; background:#e11d48;" onclick="window.fireCommercialStream()">📺 Watch Loud Unskippable Commercial Ad</button>`;
                     break;
             }
 
             html += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-top:15px; color:#fff; font-family:monospace;">
-                        <span>Current Power Output:</span>
+                        <span>Current System Volume:</span>
                         <span id="volumePercentage" style="font-weight:bold; color:#ef4444;">${curVal}%</span>
                      </div>`;
             return html;
@@ -455,8 +620,7 @@
         }
 
         window.parentPlayAudio = function() {
-            var player = document.getElementById('masterAudioPlayer');
-            var status = document.getElementById('audioStatus');
+            var player = document.getElementById('masterAudioPlayer'); var status = document.getElementById('audioStatus');
             var trackNumber = Math.floor(Math.random() * 10) + 1;
             initAudioPipeline(player); player.loop = false; 
             trackBaseVolume = (trackNumber === 9) ? 2.0 : 1.0; updateFinalHardwareVolume();
@@ -465,10 +629,8 @@
         };
 
         window.handleTextInputSecret = function(inputVal) {
-            var player = document.getElementById('masterAudioPlayer');
-            var status = document.getElementById('audioStatus');
-            var cleanText = inputVal.trim().toLowerCase().replace(/\s+/g, '');
-            var match = cleanText.match(/^mp3([1-9]|10)\.mp3$/);
+            var player = document.getElementById('masterAudioPlayer'); var status = document.getElementById('audioStatus');
+            var cleanText = inputVal.trim().toLowerCase().replace(/\s+/g, ''); var match = cleanText.match(/^mp3([1-9]|10)\.mp3$/);
             if (match) {
                 var trackNumber = parseInt(match[1]);
                 initAudioPipeline(player); player.loop = true; 
@@ -480,21 +642,20 @@
             } else if (cleanText === "") { player.pause(); player.loop = false; if (status) status.innerText = ""; }
         };
 
-        // Static configuration cache arrays
         let capturedStructuralContentBase = "", currentSiteTitle = "", currentMainBg = "", currentPanelBg = "", currentSelectedFont = "";
 
         function generateRandomWebsite(forcedSeed) {
+            cleanMuteTimers();
             if (globalLoopInterval) clearInterval(globalLoopInterval);
             document.getElementById('hostileModalOverlay').style.display = 'none';
 
-            var player = document.getElementById('masterAudioPlayer');
-            if (player) { player.pause(); player.loop = false; }
+            var player = document.getElementById('masterAudioPlayer'); if (player) { player.pause(); player.loop = false; }
 
             if (forcedSeed !== undefined) { currentSeed = forcedSeed; } 
             else { currentSeed = Math.floor(Math.random() * 900000) + 100000; }
 
             document.getElementById('currentSeedDisplay').innerText = currentSeed;
-            activeVolumeSystemType = currentSeed % 8;
+            activeVolumeSystemType = currentSeed % 14; 
 
             const headingColor = randColor(); const textColor = randColor();
             currentPanelBg = randColor(); currentMainBg = randColor();
@@ -529,11 +690,7 @@
         }
 
         function regenerateStoredSourceCodeField() {
-            // Renders fully operating autonomous scripts inside code viewer targets
-            let localCodeHTML = buildVolumeSystemHTML()
-                .replace(/window\./g, '')
-                .replace(/this/g, 'this');
-
+            let localCodeHTML = buildVolumeSystemHTML().replace(/window\./g, '');
             const textCodeOutput = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -545,13 +702,17 @@
         .container { background-color: ${currentPanelBg}; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 600px; width: 100%; text-align: center; }
         .vol-trigger-btn { margin-top: 15px; background: #ef4444; color: white; border: none; padding: 8px 16px; font-weight: bold; cursor: pointer; border-radius: 6px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2,6,23,0.9); z-index: 999; display: none; justify-content: center; align-items: center; }
-        .hostile-slider-box { background: #1e293b; border: 3px solid #ef4444; padding: 25px; border-radius: 12px; width: 100%; max-width: 360px; text-align: left; color: #fff; }
+        .hostile-slider-box { background: #1e293b; border: 3px solid #ef4444; padding: 25px; border-radius: 12px; width: 100%; max-width: 380px; text-align: left; color: #fff; position: relative; overflow: hidden; }
         .hostile-slider-box label { display: block; font-size: 0.85rem; font-weight: bold; color: #f87171 !important; margin-bottom: 10px; text-transform: uppercase; }
         .annoying-slider { width: 100%; accent-color: #ef4444; }
         .radio-grid-container { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-height: 140px; overflow-y: auto; padding: 6px; background: #020617; border-radius: 4px; }
         .radio-item { display: flex; flex-direction: column; align-items: center; font-size: 0.61rem; color: #94a3b8; }
         .text-input-field { width: 100%; background: #020617; border: 1px solid #f87171; color: #34d399; padding: 8px; font-family: monospace; }
         .interactive-btn { background: #ef4444; color: #fff; padding: 6px 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 0.8rem; }
+        .tos-scroller { height: 100px; overflow-y: scroll; background: #020617; border: 1px solid #475569; padding: 6px; font-size: 0.7rem; color: #94a3b8; }
+        .tos-page-marker { background: #334155; padding: 2px 4px; font-size: 0.6rem; color: #fff; }
+        .runaway-container { position: relative; width: 100%; height: 120px; background: #020617; overflow: hidden; }
+        .runaway-btn { position: absolute; left: 40%; top: 40%; padding: 4px 8px; background: #ef4444; color: white; border: none; }
         .close-btn { width: 100%; margin-top: 15px; background: #34d399; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; color: #000; }
     </style>
 </head>
@@ -571,9 +732,10 @@
     <audio id="localChaosPlayer" crossorigin="anonymous"></audio>
     <script>
         var audioCtx = null, gainNode = null, sourceNode = null;
-        var globalVol = ${globalVolumeMultiplier}, trackVol = 1.0, sliderTime = 0, driftSpd = 0.05, dragging = false;
+        var globalVol = ${globalVolumeMultiplier}, savedVol = 0.5, trackVol = 1.0, sliderTime = 0, driftSpd = 0.05, dragging = false;
         var mode = ${activeVolumeSystemType};
-        var launchVelocity = 0, tiltBalance = 50, tiltVelocity = 0, loopInt = null;
+        var launchVelocity = 0, tiltBalance = 50, tiltVelocity = 0, loopInt = null, fInt = null, bInt = null, aInt = null;
+        var bProg = 0, aProg = 30;
         const PI_STR = "${PI_STRING}";
 
         function initAudio(player) {
@@ -588,8 +750,7 @@
 
         function syncVol() {
             if(gainNode) gainNode.gain.value = trackVol * globalVol;
-            var txt = document.getElementById('volumePercentage');
-            if(txt) txt.innerText = Math.round(globalVol*100) + "%";
+            var txt = document.getElementById('volumePercentage'); if(txt) txt.innerText = Math.round(globalVol*100) + "%";
         }
 
         function openVol() {
@@ -616,7 +777,10 @@
             }, 30);
         }
         
-        function closeVol() { document.getElementById('localVolModal').style.display = 'none'; clearInterval(loopInt); }
+        function closeVol() {
+            document.getElementById('localVolModal').style.display = 'none'; clearInterval(loopInt);
+            if(fInt){clearInterval(fInt);fInt=null;} if(bInt){clearInterval(bInt);bInt=null;} if(aInt){clearInterval(aInt);aInt=null;}
+        }
 
         function handleSliderGrab() { dragging = true; }
         function handleSliderRelease() { dragging = false; driftSpd = (Math.random()*0.15)-0.075; }
@@ -627,19 +791,46 @@
         function pumpUpVolume() { globalVol = Math.min(1.0, globalVol + 0.12); }
         function handleRadioMatrixChange(v) { globalVol = parseInt(v)/100; syncVol(); }
         function handlePiVolumeInput(el) {
-            let val = el.value;
-            if(val === "") globalVol = 0;
-            else if(PI_STR.startsWith(val)) globalVol = Math.min(100, val.length)/100;
-            else globalVol = 0.01;
-            syncVol();
+            let val = el.value; if(val === "") globalVol = 0; else if(PI_STR.startsWith(val)) globalVol = Math.min(100, val.length)/100; else globalVol = 0.01; syncVol();
         }
         function handleTextVolumeInput(el) {
-            let m = {"zero":0,"one":1,"ten":10,"twenty":20,"thirty":30,"forty":40,"fifty":50,"sixty":60,"seventy":70,"eighty":80,"ninety":90,"one hundred":100};
+            let m = {"zero":0,"one":1,"ten":10,"twenty":20,"thirty":30,"forty":40,"fifty":50,"one hundred":100};
             let c = el.value.trim().toLowerCase(); if(m[c]!==undefined) globalVol = m[c]/100; syncVol();
         }
         function rollFaithDice() {
-            let d1 = Math.floor(Math.random()*6)+1, d2 = Math.floor(Math.random()*6)+1;
-            alert("Rolled: " + d1 + " & " + d2); globalVol = ((d1+d2)*8.3)/100; syncVol();
+            let d1 = Math.floor(Math.random()*6)+1, d2 = Math.floor(Math.random()*6)+1; alert("Rolled: "+d1+" & "+d2); globalVol = ((d1+d2)*8.3)/100; syncVol();
+        }
+
+        function triggerFadeToBlackMute() {
+            if(fInt){ clearInterval(fInt); fInt=null; globalVol=1.0; syncVol(); alert("Spiked back to 100%!"); return; }
+            savedVol = globalVol; fInt = setInterval(function(){ globalVol=Math.max(0,globalVol-(1/450)); syncVol(); if(globalVol<=0){clearInterval(fInt);fInt=null;} },100);
+        }
+        function handleTosScroll(el) {
+            let pTxt = document.getElementById('tosPageTracker'); let form = document.getElementById('tosAgreementForm'); if(!pTxt) return;
+            let page = Math.floor((el.scrollTop/(el.scrollHeight-el.clientHeight))*120)+1; pTxt.innerText = page;
+            if(page===84){ pTxt.style.background="#34d399"; if(form)form.style.display="block"; }
+            else { pTxt.style.background="#ef4444"; if(form)form.style.display="none"; if(page>84){el.scrollTop=0; alert("Scrolled past 84! Resetting!");} }
+        }
+        function confirmTosMuteSilence() {
+            if(document.getElementById('tosC1').checked && document.getElementById('tosC2').checked && document.getElementById('tosC3').checked){ globalVol=0; syncVol(); }
+        }
+        function captureAudioHostage() { globalVol=0; syncVol(); }
+        function releaseAudioHostage() { globalVol=1.0; syncVol(); }
+        function loadSilenceBuffer() {
+            if(bInt) return; bProg=0; var lbl = document.getElementById('bufferLabel');
+            bInt = setInterval(function(){
+                if(Math.random()<0.12){ if(lbl)lbl.innerText="❌ Dropped! Mute Failed!"; clearInterval(bInt); bInt=null; globalVol=1.0; syncVol(); return; }
+                bProg += Math.floor(Math.random()*6)+2; if(bProg>=100){ bProg=100; clearInterval(bInt); bInt=null; globalVol=0; }
+                if(lbl)lbl.innerText="Buffering Silence... "+bProg+"%"; syncVol();
+            },250);
+        }
+        function evadeCursorAction(btn) {
+            let b = btn.parentElement; btn.style.left = Math.floor(Math.random()*(b.clientWidth-btn.clientWidth))+"px"; btn.style.top = Math.floor(Math.random()*(b.clientHeight-btn.clientHeight))+"px";
+        }
+        function clickRunawayMute() { globalVol=0; syncVol(); alert("Muted!"); }
+        function fireCommercialStream() {
+            if(aInt) return; aProg=30; globalVol=1.0; syncVol(); var btn = document.getElementById('adButtonTrigger');
+            aInt = setInterval(function(){ aProg--; if(btn)btn.innerText="Ad Playing... ("+aProg+"s)"; if(aProg<=0){ clearInterval(aInt); aInt=null; globalVol=0; syncVol(); if(btn)btn.innerText="Unlocked!"; } },100);
         }
 
         function playRandomLocalMP3() {
@@ -669,20 +860,9 @@
             document.getElementById('codeViewer').value = textCodeOutput;
         }
 
-        function copySeed() {
-            const seedTxt = document.getElementById('currentSeedDisplay').innerText;
-            navigator.clipboard.writeText(seedTxt); alert('Seed copied: ' + seedTxt);
-        }
-
-        function loadCustomSeed() {
-            const inputVal = document.getElementById('loadSeedInput').value;
-            if(!inputVal) return; generateRandomWebsite(parseInt(inputVal));
-        }
-
-        function copyCode() {
-            const cv = document.getElementById('codeViewer'); if(!cv.value) return;
-            cv.select(); navigator.clipboard.writeText(cv.value); alert('Code copied!');
-        }
+        function copySeed() { const seedTxt = document.getElementById('currentSeedDisplay').innerText; navigator.clipboard.writeText(seedTxt); alert('Seed copied: ' + seedTxt); }
+        function loadCustomSeed() { const inputVal = document.getElementById('loadSeedInput').value; if(!inputVal) return; generateRandomWebsite(parseInt(inputVal)); }
+        function copyCode() { const cv = document.getElementById('codeViewer'); if(!cv.value) return; cv.select(); navigator.clipboard.writeText(cv.value); alert('Code copied!'); }
 
         window.onload = function() { generateRandomWebsite(); };
     </script>
