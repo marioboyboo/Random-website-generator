@@ -195,24 +195,32 @@
         }
         .interactive-btn:hover { opacity: 0.9; }
 
+        /* FULLSCREEN COMPONENT FOR PDF INJECTION */
+        .pdf-fullscreen-viewer {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: black; z-index: 100000; display: none;
+            flex-direction: column;
+        }
+
         /* MUTE SPECIFIC STYLES */
         .tos-box {
             background: #020617; border: 1px solid #334155; height: 130px;
-            overflow-y: scroll; padding: 10px; font-size: 0.75rem; color: #94a3b8;
+            overflow-y: scroll; padding: 12px; font-size: 0.75rem; color: #94a3b8;
             margin-top: 8px; border-radius: 6px;
         }
         .tos-page-marker {
             background: #1e293b; padding: 4px; text-align: center; 
             font-weight: bold; color: #38bdf8; margin: 10px 0; border-radius: 4px;
         }
-        .runaway-container {
-            position: relative; width: 100%; height: 70px; background: #020617;
-            border-radius: 6px; border: 1px solid #334155; margin-top: 8px;
-        }
-        .runaway-btn {
-            position: absolute; left: 10px; top: 15px; padding: 8px 14px;
-            background: #ef4444; color: white; border: none; font-weight: bold;
-            border-radius: 4px; cursor: pointer; transition: left 0.1s ease, top 0.1s ease;
+
+        /* GLOBAL SMOOTH RUNAWAY BUTTON */
+        .runaway-global-btn {
+            position: fixed; z-index: 10005; padding: 10px 18px;
+            background: #ef4444; color: white; border: 2px solid white; font-weight: bold;
+            border-radius: 6px; cursor: pointer; pointer-events: auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            display: none; transform: translate(-50%, -50%);
+            left: 50%; top: 50%;
         }
 
         @media (max-width: 768px) {
@@ -273,6 +281,16 @@
         </div>
     </div>
 
+    <div id="pdfViewerContainer" class="pdf-fullscreen-viewer">
+        <div style="background: #1e293b; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: white; font-weight: bold;">CRITICAL SYSTEM AGREEMENT DOCUMENTATION</span>
+            <button class="btn-warn" style="padding: 5px 10px; font-size: 0.8rem;" onclick="window.closeFullscreenPDFContainer()">Exit Legal Mode</button>
+        </div>
+        <iframe id="pdfIframeElement" src="" style="width: 100%; flex: 1; border: none;"></iframe>
+    </div>
+
+    <button id="globalSmoothRunawayMuteBtn" class="runaway-global-btn">🔇 Mute</button>
+
     <audio id="masterAudioPlayer" preload="auto" crossorigin="anonymous"></audio>
 
     <script>
@@ -284,30 +302,41 @@
 
         let currentSeed = 1;
         let activeVolumeSystemType = 0; 
-        let activeMuteSystemType = 0; // 0 to 5 mapped to the 6 selected mute mechanics
+        let activeMuteSystemType = 0; 
 
         let globalVolumeMultiplier = 0.5; 
         let trackBaseVolume = 1.0;
         let softwareMuteActive = false;
 
-        // Loop / Physics trackers
+        // Loop trackers
         let globalLoopInterval = null;
         let sliderTime = 0;
         let baseDriftSpeed = 0.05;
         let isUserDraggingSlider = false;
 
-        // Specific system runtimes
+        // Specific volume track variables
         let launchVelocity = 0;
         let tiltBalance = 50;
         let tiltVelocity = 0;
 
-        // Mute state trackers
+        // Mute states
         let fadeToBlackInterval = null;
-        let fadeProgress = 0; // 0 to 45 seconds tracking
+        let fadeProgress = 0;
         let bufferSilenceProgress = 0;
         let bufferSilenceActive = false;
         let adPlayingActive = false;
         let adTimeRemaining = 30;
+
+        // TOS Runtime Trackers
+        let hasOpenedPDFFile = false;
+
+        // Global Runway Physics State Machine Vectors
+        let runawayX = window.innerWidth / 2;
+        let runawayY = window.innerHeight / 2;
+        let runawayVx = 0;
+        let runawayVy = 0;
+        let currentMouseX = 0;
+        let currentMouseY = 0;
 
         function seededRandom() {
             currentSeed = (currentSeed * 1664525 + 1013904223) % 4294967296;
@@ -330,34 +359,53 @@
 
         function updateFinalHardwareVolume() {
             let targetVolume = trackBaseVolume * globalVolumeMultiplier;
-            
-            // Apply Fade-To-Black muting attenuation curves if processing
             if (fadeProgress > 0) {
                 let factor = Math.max(0, (45 - fadeProgress) / 45);
                 targetVolume *= factor;
             } else if (softwareMuteActive) {
                 targetVolume = 0;
             }
-
             if (gainNode) { gainNode.gain.value = targetVolume; }
-            
             var indicator = document.getElementById('volumePercentage');
             if (indicator) indicator.innerText = Math.round(globalVolumeMultiplier * 100) + "%" + (softwareMuteActive ? " (MUTED)" : "");
         }
 
+        // Global mouse moves updates internal matrix targets for smoothly escaping
+        document.addEventListener('mousemove', function(e) {
+            currentMouseX = e.clientX;
+            currentMouseY = e.clientY;
+        });
+
         window.openHostileVolumeModal = function() {
             let workingSeed = parseInt(document.getElementById('currentSeedDisplay').innerText) || 123456;
             activeVolumeSystemType = workingSeed % 8;
-            activeMuteSystemType = workingSeed % 6; // Dynamically binds one of the 6 mute components based on seed
+            activeMuteSystemType = workingSeed % 6;
 
             document.getElementById('hostileModalOverlay').style.display = 'flex';
             renderActiveVolumeUIElement();
             renderActiveMuteUIElement();
+
+            if (activeMuteSystemType === 4) {
+                let btn = document.getElementById('globalSmoothRunawayMuteBtn');
+                if (btn) {
+                    runawayX = window.innerWidth / 2;
+                    runawayY = window.innerHeight / 2;
+                    runawayVx = 0; runawayVy = 0;
+                    btn.style.display = 'block';
+                    btn.style.left = runawayX + "px";
+                    btn.style.top = runawayY + "px";
+                }
+            } else {
+                let btn = document.getElementById('globalSmoothRunawayMuteBtn');
+                if(btn) btn.style.display = 'none';
+            }
             startModalLoopPhysics();
         };
 
         window.closeHostileVolumeModal = function() {
             document.getElementById('hostileModalOverlay').style.display = 'none';
+            let btn = document.getElementById('globalSmoothRunawayMuteBtn');
+            if(btn) btn.style.display = 'none';
             if (globalLoopInterval) clearInterval(globalLoopInterval);
         };
 
@@ -365,7 +413,7 @@
             if (globalLoopInterval) clearInterval(globalLoopInterval);
             
             globalLoopInterval = setInterval(function() {
-                // 1. Slider drift handling
+                // Volume drift configurations
                 if (activeVolumeSystemType === 0) {
                     var slider = document.getElementById('annoyingVolumeControl');
                     if (!slider) return;
@@ -377,7 +425,6 @@
                     }
                     globalVolumeMultiplier = parseFloat(slider.value) / 100;
                 }
-                // 2. Accelerator velocity handling
                 else if (activeVolumeSystemType === 1) {
                     var slider = document.getElementById('velocitySlider');
                     if(slider && launchVelocity !== 0) {
@@ -387,7 +434,6 @@
                         globalVolumeMultiplier = parseFloat(slider.value) / 100;
                     }
                 }
-                // 3. Gravity beam tilt handling
                 else if (activeVolumeSystemType === 2) {
                     tiltVelocity += (Math.random() * 0.4 - 0.2);
                     tiltBalance += tiltVelocity;
@@ -398,14 +444,44 @@
                     }
                     if(tiltBalance <= 0 || tiltBalance >= 100) tiltVelocity = -tiltVelocity * 0.5;
                 }
-                // 4. Constant air leak pump handling
                 else if (activeVolumeSystemType === 3) {
                     globalVolumeMultiplier = Math.max(0, globalVolumeMultiplier - 0.006);
                     var slider = document.getElementById('pumpSlider');
                     if(slider) slider.value = Math.round(globalVolumeMultiplier * 100);
                 }
 
-                // 5. Mute: Buffering Silence Processing
+                // Smooth runaway vector kinematics calculations
+                if (activeMuteSystemType === 4) {
+                    let btn = document.getElementById('globalSmoothRunawayMuteBtn');
+                    if (btn && btn.style.display === 'block') {
+                        let dx = runawayX - currentMouseX;
+                        let dy = runawayY - currentMouseY;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 180) {
+                            let force = (180 - dist) / 180;
+                            let angle = Math.atan2(dy, dx);
+                            if (dist === 0) angle = Math.random() * Math.PI * 2;
+                            runawayVx += Math.cos(angle) * force * 4.5;
+                            runawayVy += Math.sin(angle) * force * 4.5;
+                        }
+
+                        runawayVx *= 0.92;
+                        runawayVy *= 0.92;
+                        runawayX += runawayVx;
+                        runawayY += runawayVy;
+
+                        let radiusOffset = 40;
+                        if (runawayX < radiusOffset) { runawayX = radiusOffset; runawayVx *= -1; }
+                        if (runawayX > window.innerWidth - radiusOffset) { runawayX = window.innerWidth - radiusOffset; runawayVx *= -1; }
+                        if (runawayY < radiusOffset) { runawayY = radiusOffset; runawayVy *= -1; }
+                        if (runawayY > window.innerHeight - radiusOffset) { runawayY = window.innerHeight - radiusOffset; runawayVy *= -1; }
+
+                        btn.style.left = runawayX + "px";
+                        btn.style.top = runawayY + "px";
+                    }
+                }
+
                 if (bufferSilenceActive && bufferSilenceProgress < 100) {
                     bufferSilenceProgress += Math.random() * 2.5;
                     var txt = document.getElementById('bufferStatusText');
@@ -416,7 +492,6 @@
                     }
                 }
 
-                // 6. Mute: Ad Engine Countdowns
                 if (adPlayingActive && adTimeRemaining > 0) {
                     adTimeRemaining = Math.max(0, adTimeRemaining - 0.03);
                     var txt = document.getElementById('adCounterLabel');
@@ -432,7 +507,7 @@
             }, 30);
         }
 
-        // Action routing triggers
+        // Action interfaces
         window.handleSliderGrab = function() { isUserDraggingSlider = true; };
         window.handleSliderRelease = function() { isUserDraggingSlider = false; baseDriftSpeed = (Math.random() * 0.15) - 0.075; };
         window.launchVolumeVelocity = function() { launchVelocity = (Math.random() * 6) + 3; };
@@ -464,26 +539,20 @@
             globalVolumeMultiplier = ((d1 + d2) * 8.3) / 100; updateFinalHardwareVolume();
         };
 
-        // --- HORRIFIC MUTE PARSERS ---
         window.triggerFadeToBlackMute = function() {
             var lbl = document.getElementById('fadeMuteLabel');
             if (fadeProgress > 0) {
-                // Twist: Second click spike back instantly!
                 if(fadeToBlackInterval) clearInterval(fadeToBlackInterval);
-                fadeProgress = 0;
-                globalVolumeMultiplier = 1.0;
-                softwareMuteActive = false;
+                fadeProgress = 0; globalVolumeMultiplier = 1.0; softwareMuteActive = false;
                 if(lbl) lbl.innerText = "🛑 IMPATIENCE DETECTED! Volume Spiked to 100%!";
             } else {
-                fadeProgress = 0.1;
-                softwareMuteActive = false;
+                fadeProgress = 0.1; softwareMuteActive = false;
                 if(lbl) lbl.innerText = "Fading out audio slowly (45s)... Click again to cancel.";
                 fadeToBlackInterval = setInterval(function() {
                     fadeProgress += 0.5;
                     if (lbl && fadeProgress <= 45) lbl.innerText = `Fading... ${Math.round(45 - fadeProgress)}s remaining.`;
                     if (fadeProgress >= 45) {
-                        clearInterval(fadeToBlackInterval);
-                        softwareMuteActive = true;
+                        clearInterval(fadeToBlackInterval); softwareMuteActive = true;
                         if(lbl) lbl.innerText = "Mute complete via Fade-to-Black.";
                     }
                     updateFinalHardwareVolume();
@@ -492,11 +561,29 @@
             updateFinalHardwareVolume();
         };
 
+        // Trigger native HTML5 fullscreen frame mapping for external document file asset
+        window.launchFullscreenPDFViewer = function() {
+            hasOpenedPDFFile = true;
+            let viewer = document.getElementById('pdfViewerContainer');
+            let iframe = document.getElementById('pdfIframeElement');
+            iframe.src = "terms_of_service.pdf";
+            viewer.style.display = "flex";
+
+            if (viewer.requestFullscreen) { viewer.requestFullscreen(); }
+            else if (viewer.webkitRequestFullscreen) { viewer.webkitRequestFullscreen(); }
+            else if (viewer.msRequestFullscreen) { viewer.msRequestFullscreen(); }
+        };
+
+        window.closeFullscreenPDFContainer = function() {
+            let viewer = document.getElementById('pdfViewerContainer');
+            viewer.style.display = "none";
+            if (document.exitFullscreen) { document.exitFullscreen().catch(() => {}); }
+            else if (document.webkitExitFullscreen) { document.webkitExitFullscreen().catch(() => {}); }
+        };
+
         window.handleTosScrollMonitor = function(el) {
             var pageIndicator = document.getElementById('tosPageTrackerDisplay');
             var acceptBtn = document.getElementById('tosQuietSubmitBtn');
-            
-            // Approximate pages calculated via container metrics
             let calculatedPage = Math.floor(el.scrollTop / 70) + 1;
             if (pageIndicator) pageIndicator.innerText = "PAGE LOCATION: " + calculatedPage + " / 120";
 
@@ -514,6 +601,10 @@
         };
 
         window.applyTosMuteLockout = function() {
+            if (!hasOpenedPDFFile) {
+                alert("you must read terms of service first");
+                return;
+            }
             let c1 = document.getElementById('tosBox1').checked;
             let c2 = document.getElementById('tosBox2').checked;
             let c3 = document.getElementById('tosBox3').checked;
@@ -528,29 +619,14 @@
 
         window.engageHostageMuteHold = function() { softwareMuteActive = true; updateFinalHardwareVolume(); };
         window.releaseHostageMuteHold = function() { softwareMuteActive = false; globalVolumeMultiplier = 1.0; updateFinalHardwareVolume(); };
+        window.startBufferSilenceSequence = function() { bufferSilenceActive = true; bufferSilenceProgress = 0; };
+        window.playAdvertiserMuteVideo = function() { adPlayingActive = true; adTimeRemaining = 30; globalVolumeMultiplier = 1.0; trackBaseVolume = 2.0; updateFinalHardwareVolume(); };
 
-        window.startBufferSilenceSequence = function() {
-            bufferSilenceActive = true;
-            bufferSilenceProgress = 0;
-        };
-
-        window.handleMuteRunawayHover = function(btn) {
-            // Actively flees within bounds when approached
-            let newX = Math.floor(Math.random() * 260) + 5;
-            let newY = Math.floor(Math.random() * 30) + 5;
-            btn.style.left = newX + "px";
-            btn.style.top = newY + "px";
-        };
-        window.clickRunawayMuteSuccess = function() { softwareMuteActive = !softwareMuteActive; updateFinalHardwareVolume(); alert("Lucky click! Mute toggled."); };
-
-        window.playAdvertiserMuteVideo = function() {
-            adPlayingActive = true;
-            adTimeRemaining = 30;
-            // Force maximize audio levels to mock the prompt rules
-            globalVolumeMultiplier = 1.0;
-            trackBaseVolume = 2.0; 
+        document.getElementById('globalSmoothRunawayMuteBtn').addEventListener('click', function() {
+            softwareMuteActive = !softwareMuteActive;
             updateFinalHardwareVolume();
-        };
+            alert("Incredible click tracking metrics! Mute status updated.");
+        });
 
         function buildVolumeSystemHTML() {
             let curVal = Math.round(globalVolumeMultiplier * 100);
@@ -574,14 +650,15 @@
         function buildMuteSystemHTML() {
             let html = "";
             switch(activeMuteSystemType) {
-                case 0: // Fade to black
+                case 0:
                     html += `<label>🔇 MUTE MODE 1: THE "FADE TO BLACK" ATTENUATOR</label>
                              <div id="fadeMuteLabel" style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">Triggers an incredibly slow 45-second audio fade-out loop.</div>
                              <button class="interactive-btn" style="width:100%;" onclick="window.triggerFadeToBlackMute()">🔇 Engage Slow Fade Mute</button>`;
                     break;
-                case 1: // TOS Mute
+                case 1:
                     html += `<label>🔇 MUTE MODE 2: "TERMS OF SERVICE" LEGAL LOCKOUT</label>
-                             <div style="font-size:0.75rem; color:#94a3b8;">Scroll precisely to Page 84 to sign the quiet provisions agreement. Do not overscroll!</div>
+                             <button class="interactive-btn" style="width:100%; background: #2563eb; margin-bottom:8px;" onclick="window.launchFullscreenPDFViewer()">📖 Open Terms of Service Document</button>
+                             <div style="font-size:0.75rem; color:#94a3b8;">Scroll precisely to Page 84 below to sign the configuration provision agreement. Do not overscroll!</div>
                              <div class="tos-box" onscroll="window.handleTosScrollMonitor(this)">`;
                     for(let i=1; i<=120; i++) {
                         html += `<div class="tos-page-marker">--- LEGAL PARAGRAPH SECTION PAGE ${i} ---</div>`;
@@ -592,31 +669,28 @@
                                         <input type="checkbox" id="tosBox3"> <label style="display:inline; color:#fff!important; font-size:0.7rem;">I accept temporary structural sound denial.</label>
                                      </div>`;
                         } else {
-                            html += `<p style="line-height:1.3; margin-bottom:8px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Digital silence clause sub-section ${i}. User agrees to maintain isolation behaviors.</p>`;
+                            html += `<p style="line-height:1.3; margin-bottom:8px; opacity: 0.4;">[Section Data Paragraph File Clause Elements - Refer to Full Screen Target Frame Document]</p>`;
                         }
                     }
                     html += `</div>
                              <div id="tosPageTrackerDisplay" style="font-size:0.75rem; font-weight:bold; margin-top:5px; color:#38bdf8;">PAGE LOCATION: 1 / 120</div>
                              <button id="tosQuietSubmitBtn" class="interactive-btn" style="width:100%;" onclick="window.applyTosMuteLockout()" disabled>I Agree to Be Quiet</button>`;
                     break;
-                case 2: // Energy Harvester
+                case 2:
                     html += `<label>🔇 MUTE MODE 3: THE "ENERGY HARVESTER" HOSTAGE BUTTON</label>
                              <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">Sound only mutes while actively holding down this node. Release pops volume back to 100%!</div>
                              <button class="interactive-btn" style="width:100%; padding:15px; background:#f59e0b;" onmousedown="window.engageHostageMuteHold()" onmouseup="window.releaseHostageMuteHold()" ontouchstart="window.engageHostageMuteHold()" ontouchend="window.releaseHostageMuteHold()">✊ PIN BUTTON DOWN TO SILENCE</button>`;
                     break;
-                case 3: // Buffer Mute
+                case 3:
                     html += `<label>🔇 MUTE MODE 4: THE "BUFFER NETWORK" SILENCE LOADER</label>
                              <div id="bufferStatusText" style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">The system must actively run down packets to fetch lack of sound.</div>
                              <button class="interactive-btn" style="width:100%;" onclick="window.startBufferSilenceSequence()">⏳ Buffer Silence Protocol</button>`;
                     break;
-                case 4: // Reverse psychology
+                case 4:
                     html += `<label>🔇 MUTE MODE 5: REVERSE PSYCHOLOGY RUNAWAY TARGET</label>
-                             <div style="font-size:0.75rem; color:#94a3b8;">The button shares the same magnetic polarity as your cursor. Corner it!</div>
-                             <div class="runaway-container">
-                                <button class="runaway-btn" onmouseover="window.handleMuteRunawayHover(this)" onclick="window.clickRunawayMuteSuccess()">🔇 Mute</button>
-                             </div>`;
+                             <div style="font-size:0.75rem; color:#a855f7; font-weight:bold;">SYSTEM TARGET UNLOCKED: The mute button is now running loose on the main viewport framework! Track it down!</div>`;
                     break;
-                case 5: // Advertiser supported
+                case 5:
                     html += `<label>🔇 MUTE MODE 6: ADVERTISER-SUPPORTED MEDIA AMPLIFIER</label>
                              <div id="adCounterLabel" style="font-size:0.75rem; color:#f87171; margin-bottom:6px; font-weight:bold;">Watch a 30s unskippable video ad at maximum volume to unlock mute.</div>
                              <button class="interactive-btn" style="width:100%; background:#8b5cf6;" onclick="window.playAdvertiserMuteVideo()">📺 Stream Unskippable Ad</button>`;
@@ -662,9 +736,9 @@
             if (globalLoopInterval) clearInterval(globalLoopInterval);
             if (fadeToBlackInterval) clearInterval(fadeToBlackInterval);
             
-            // Clear runtime modal states
             document.getElementById('hostileModalOverlay').style.display = 'none';
-            softwareMuteActive = false; fadeProgress = 0; bufferSilenceActive = false; adPlayingActive = false;
+            document.getElementById('globalSmoothRunawayMuteBtn').style.display = 'none';
+            softwareMuteActive = false; fadeProgress = 0; bufferSilenceActive = false; adPlayingActive = false; hasOpenedPDFFile = false;
 
             var player = document.getElementById('masterAudioPlayer');
             if (player) { player.pause(); player.loop = false; }
@@ -732,16 +806,16 @@
         .radio-item { display: flex; flex-direction: column; align-items: center; font-size: 0.61rem; color: #94a3b8; }
         .text-input-field { width: 100%; background: #020617; border: 1px solid #f87171; color: #34d399; padding: 8px; font-family: monospace; }
         .interactive-btn { background: #ef4444; color: #fff; padding: 6px 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 0.8rem; }
-        .tos-box { background: #020617; border: 1px solid #334155; height: 120px; overflow-y: scroll; padding: 8px; font-size: 0.75rem; color: #94a3b8; margin-top: 6px; }
+        .tos-box { background: #020617; border: 1px solid #334155; height: 130px; overflow-y: scroll; padding: 8px; font-size: 0.75rem; color: #94a3b8; margin-top: 6px; }
         .tos-page-marker { background: #1e293b; padding: 4px; text-align: center; color: #38bdf8; margin: 8px 0; font-weight: bold; }
-        .runaway-container { position: relative; width: 100%; height: 60px; background: #020617; border: 1px solid #334155; margin-top: 6px; }
-        .runaway-btn { position: absolute; left: 10px; top: 12px; padding: 6px 12px; background: #ef4444; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .pdf-fullscreen-viewer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; z-index: 100000; display: none; flex-direction: column; }
+        .runaway-global-btn { position: fixed; z-index: 10005; padding: 10px 18px; background: #ef4444; color: white; border: 2px solid white; font-weight: bold; border-radius: 6px; cursor: pointer; display: none; transform: translate(-50%, -50%); }
         .close-btn { width: 100%; margin-top: 20px; background: #34d399; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; color: #000; }
     </style>
 </head>
 <body>
     <div class="container">
-        ${capturedStructuralContentBase.trim().replace('oninput="window.handleTextInputSecret(this.value)"', 'oninput="playLocalLoopMP3(this.value)"').replace('onclick="window.parentPlayAudio()"', 'onclick="playRandomLocalMP3()"')}
+        ${capturedStructuralContentBase.trim().replace('oninput="window.handleTextInputSecret(this.value)"', 'oninput=\"playLocalLoopMP3(this.value)\"').replace('onclick="window.parentPlayAudio()"', 'onclick=\"playRandomLocalMP3()\"')}
         <button class="vol-trigger-btn" onclick="openVol()">⚙️ Change MP3 Volume</button>
     </div>
 
@@ -754,6 +828,16 @@
         </div>
     </div>
 
+    <div id="pdfViewerContainer" class="pdf-fullscreen-viewer">
+        <div style="background: #1e293b; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: white; font-weight: bold;">CRITICAL SYSTEM AGREEMENT DOCUMENTATION</span>
+            <button class="close-btn" style="width:auto; margin:0; padding:5px 10px; background:#ef4444; color:white;" onclick="closeFullscreenPDFContainer()">Exit Legal Mode</button>
+        </div>
+        <iframe id="pdfIframeElement" src="" style="width: 100%; flex: 1; border: none;"></iframe>
+    </div>
+
+    <button id="globalSmoothRunawayMuteBtn" class="runaway-global-btn">🔇 Mute</button>
+
     <audio id="localChaosPlayer" crossorigin="anonymous"></audio>
     <script>
         var audioCtx = null, gainNode = null, sourceNode = null;
@@ -761,14 +845,17 @@
         var mode = ${activeVolumeSystemType}, muteMode = ${activeMuteSystemType};
         var launchVelocity = 0, tiltBalance = 50, tiltVelocity = 0, loopInt = null, fadeInt = null;
         var softMute = false, fadeProg = 0, bufActive = false, bufProg = 0, adActive = false, adTime = 30;
+        var hasOpenedPDF = false, runawayX = window.innerWidth/2, runawayY = window.innerHeight/2, rVx = 0, rVy = 0, mX = 0, mY = 0;
         const PI_STR = "${PI_STRING}";
+
+        document.addEventListener('mousemove', function(e) { mX = e.clientX; mY = e.clientY; });
 
         function initAudio(player) {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 gainNode = audioCtx.createGain();
                 sourceNode = audioCtx.createMediaElementSource(player);
-                sourceNode.connect(gainNode); sourceNode.connect(gainNode); gainNode.connect(audioCtx.destination);
+                sourceNode.connect(gainNode); gainNode.connect(audioCtx.destination);
             }
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
         }
@@ -784,6 +871,10 @@
 
         function openVol() {
             document.getElementById('localVolModal').style.display = 'flex';
+            if(muteMode === 4) {
+                let b = document.getElementById('globalSmoothRunawayMuteBtn');
+                if(b) { runawayX=window.innerWidth/2; runawayY=window.innerHeight/2; rVx=0; rVy=0; b.style.display='block'; }
+            }
             if(loopInt) clearInterval(loopInt);
             loopInt = setInterval(function() {
                 if(mode === 0) {
@@ -801,6 +892,20 @@
                 } else if(mode === 3) {
                     globalVol = Math.max(0, globalVol - 0.006); var s = document.getElementById('pumpSlider'); if(s) s.value = Math.round(globalVol*100);
                 }
+                if(muteMode === 4) {
+                    let b = document.getElementById('globalSmoothRunawayMuteBtn');
+                    if(b && b.style.display === 'block') {
+                        let dx = runawayX - mX, dy = runawayY - mY, dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist < 180) {
+                            let f = (180 - dist)/180, a = Math.atan2(dy, dx);
+                            rVx += Math.cos(a) * f * 4.5; rVy += Math.sin(a) * f * 4.5;
+                        }
+                        rVx *= 0.92; rVy *= 0.92; runawayX += rVx; runawayY += rVy;
+                        if(runawayX<40){ runawayX=40; rVx*=-1; } if(runawayX>window.innerWidth-40){ runawayX=window.innerWidth-40; rVx*=-1; }
+                        if(runawayY<40){ runawayY=40; rVy*=-1; } if(runawayY>window.innerHeight-40){ runawayY=window.innerHeight-40; rVy*=-1; }
+                        b.style.left = runawayX + "px"; b.style.top = runawayY + "px";
+                    }
+                }
                 if (bufActive && bufProg < 100) {
                     bufProg += Math.random() * 2; var t = document.getElementById('bufferStatusText');
                     if(t) t.innerText = "Buffering Silence... " + Math.floor(bufProg) + "%";
@@ -815,8 +920,7 @@
             }, 30);
         }
         
-        function closeVol() { document.getElementById('localVolModal').style.display = 'none'; clearInterval(loopInt); }
-
+        function closeVol() { document.getElementById('localVolModal').style.display = 'none'; let b=document.getElementById('globalSmoothRunawayMuteBtn'); if(b)b.style.display='none'; clearInterval(loopInt); }
         function handleSliderGrab() { dragging = true; }
         function handleSliderRelease() { dragging = false; driftSpd = (Math.random()*0.15)-0.075; }
         function launchVolumeVelocity() { launchVelocity = (Math.random()*6)+3; }
@@ -849,6 +953,16 @@
             }
             syncVol();
         }
+
+        function launchFullscreenPDFViewer() {
+            hasOpenedPDF = true; let v = document.getElementById('pdfViewerContainer');
+            document.getElementById('pdfIframeElement').src = "terms_of_service.pdf"; v.style.display = "flex";
+            if (v.requestFullscreen) v.requestFullscreen(); else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+        }
+        function closeFullscreenPDFContainer() {
+            document.getElementById('pdfViewerContainer').style.display = "none";
+            if (document.exitFullscreen) document.exitFullscreen().catch(function(){}); else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(function(){});
+        }
         function handleTosScrollMonitor(el) {
             var page = Math.floor(el.scrollTop / 70) + 1; var ind = document.getElementById('tosPageTrackerDisplay'); var btn = document.getElementById('tosQuietSubmitBtn');
             if(ind) ind.innerText = "PAGE LOCATION: " + page + " / 120";
@@ -857,13 +971,14 @@
             else { if(ind) ind.style.color = "#38bdf8"; if(btn) btn.disabled = true; }
         }
         function applyTosMuteLockout() {
+            if(!hasOpenedPDF) { alert("you must read terms of service first"); return; }
             if(document.getElementById('tosBox1').checked && document.getElementById('tosBox2').checked && document.getElementById('tosBox3').checked) { softMute = true; syncVol(); }
         }
+
+        document.getElementById('globalSmoothRunawayMuteBtn').addEventListener('click', function() { softMute = !softMute; syncVol(); alert("Mute state toggled!"); });
         function engageHostageMuteHold() { softMute = true; syncVol(); }
         function releaseHostageMuteHold() { softMute = false; globalVol = 1.0; syncVol(); }
         function startBufferSilenceSequence() { bufActive = true; bufProg = 0; }
-        function handleMuteRunawayHover(btn) { btn.style.left = Math.floor(Math.random()*240) + "px"; btn.style.top = Math.floor(Math.random()*25) + "px"; }
-        function clickRunawayMuteSuccess() { softMute = !softMute; syncVol(); }
         function playAdvertiserMuteVideo() { adActive = true; adTime = 30; globalVol = 1.0; trackVol = 2.0; syncVol(); }
 
         function playRandomLocalMP3() {
