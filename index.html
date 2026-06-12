@@ -159,6 +159,33 @@
             padding: 20px;
         }
 
+        /* Hostile Volume Container */
+        .hostile-slider-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px dotted #ef4444;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: inline-block;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .hostile-slider-box label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #f87171 !important;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .annoying-slider {
+            width: 100%;
+            cursor: not-allowed;
+            accent-color: #ef4444;
+        }
+
         @media (max-width: 768px) {
             body { overflow: auto; height: auto; min-height: 100vh; }
             header { flex-direction: column; align-items: stretch; }
@@ -219,23 +246,23 @@
         const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS"];
 
         let currentSeed = 1;
+        let globalVolumeMultiplier = 1.0; 
+        let trackBaseVolume = 1.0;
 
-        // Seeded Pseudo-Random Number Generator (LCG Algorithm)
+        // Chaos Slider Physics Variables
+        let sliderInterval = null;
+        let sliderTime = 0;
+        let baseDriftSpeed = 0.05;
+        let isUserDraggingSlider = false;
+
         function seededRandom() {
-            // Standard parameters for LCG
             currentSeed = (currentSeed * 1664525 + 1013904223) % 4294967296;
             return currentSeed / 4294967296;
         }
 
-        function rand(arr) { 
-            return arr[Math.floor(seededRandom() * arr.length)]; 
-        }
-        function randRange(min, max) { 
-            return Math.floor(seededRandom() * (max - min + 1)) + min; 
-        }
-        function randColor() { 
-            return `hsl(${randRange(0, 360)}, ${randRange(50, 95)}%, ${randRange(30, 70)}%)`; 
-        }
+        function rand(arr) { return arr[Math.floor(seededRandom() * arr.length)]; }
+        function randRange(min, max) { return Math.floor(seededRandom() * (max - min + 1)) + min; }
+        function randColor() { return `hsl(${randRange(0, 360)}, ${randRange(50, 95)}%, ${randRange(30, 70)}%)`; }
 
         let audioCtx = null;
         let gainNode = null;
@@ -254,7 +281,53 @@
             }
         }
 
-        // Standard random track play
+        // Live hardware volume updater combining track properties and annoying slider value
+        function updateFinalHardwareVolume() {
+            if (gainNode) {
+                gainNode.gain.value = trackBaseVolume * globalVolumeMultiplier;
+            }
+        }
+
+        // Hostile Slider Engine Initialization
+        window.startAnnoyingSliderPhysics = function() {
+            if (sliderInterval) clearInterval(sliderInterval);
+            
+            sliderInterval = setInterval(function() {
+                var slider = document.getElementById('annoyingVolumeControl');
+                var textIndicator = document.getElementById('volumePercentage');
+                if (!slider) return;
+
+                sliderTime += baseDriftSpeed;
+                
+                // If user is actively wrestling the knob, make it vibrate aggressively
+                if (isUserDraggingSlider) {
+                    let jitter = (Math.sin(sliderTime * 15) * 4);
+                    let newVal = Math.max(0, Math.min(100, parseFloat(slider.value) + jitter));
+                    slider.value = newVal;
+                } else {
+                    // If left alone, drift fluidly back and forth like a boat sliding down a wave
+                    let drift = (Math.sin(sliderTime * 2) * 1.5) + (Math.cos(sliderTime * 5) * 0.5);
+                    let newVal = Math.max(0, Math.min(100, parseFloat(slider.value) + drift));
+                    slider.value = newVal;
+                }
+
+                globalVolumeMultiplier = parseFloat(slider.value) / 100;
+                if (textIndicator) textIndicator.innerText = Math.round(globalVolumeMultiplier * 100) + "%";
+                updateFinalHardwareVolume();
+            }, 30);
+        };
+
+        window.handleSliderGrab = function() {
+            isUserDraggingSlider = true;
+        };
+
+        window.handleSliderRelease = function() {
+            isUserDraggingSlider = false;
+            // Randomize speed/direction parameters every single time they let go to destroy muscle memory
+            baseDriftSpeed = (Math.random() * 0.15) - 0.075;
+            if(baseDriftSpeed === 0) baseDriftSpeed = 0.05;
+        };
+
         window.parentPlayAudio = function() {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
@@ -265,8 +338,10 @@
             initAudioPipeline(player);
             player.loop = false; 
 
-            if (trackNumber === 9) { gainNode.gain.value = 2.0; } 
-            else { gainNode.gain.value = 1.0; }
+            if (trackNumber === 9) { trackBaseVolume = 2.0; } 
+            else { trackBaseVolume = 1.0; }
+            
+            updateFinalHardwareVolume();
             
             if (status) status.innerText = "Playing: " + trackName;
             
@@ -275,7 +350,6 @@
             player.play().catch(function(err) { console.error(err); });
         };
 
-        // Handle target looping via dynamic input matching
         window.handleTextInputSecret = function(inputVal) {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
@@ -290,8 +364,10 @@
                 initAudioPipeline(player);
                 player.loop = true; 
 
-                if (trackNumber === 9) { gainNode.gain.value = 2.0; } 
-                else { gainNode.gain.value = 1.0; }
+                if (trackNumber === 9) { trackBaseVolume = 2.0; } 
+                else { trackBaseVolume = 1.0; }
+
+                updateFinalHardwareVolume();
 
                 if (status) status.innerText = "🔄 Looping: " + trackName;
 
@@ -314,14 +390,9 @@
                 player.loop = false;
             }
 
-            // Set seed or generate a fresh numerical runtime seed
-            if (forcedSeed !== undefined) {
-                currentSeed = forcedSeed;
-            } else {
-                currentSeed = Math.floor(Math.random() * 900000) + 100000;
-            }
+            if (forcedSeed !== undefined) { currentSeed = forcedSeed; } 
+            else { currentSeed = Math.floor(Math.random() * 900000) + 100000; }
 
-            // Publish seed identity to UI layer
             document.getElementById('currentSeedDisplay').innerText = currentSeed;
 
             const headingColor = randColor();
@@ -341,7 +412,6 @@
                     <p id="audioStatus" style="font-size:1rem; font-weight:bold; color:${textColor}; min-height: 1.2em;"></p>
                 </div>\n`;
 
-            // Deterministic structural variance calculated through seeded generator
             if (seededRandom() < 0.5) {
                 structuralContent += `
                 <div style="margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">
@@ -359,6 +429,21 @@
                     </button>
                 </div>\n`;
             }
+
+            // ALWAYS append the malicious volume component to the generated card design
+            structuralContent += `
+            <div class="hostile-slider-box">
+                <label>⚠️ WARNING: UNSTABLE VOLUME SYSTEM</label>
+                <input type="range" id="annoyingVolumeControl" class="annoying-slider" min="0" max="100" value="50" 
+                    onmousedown="window.handleSliderGrab()" 
+                    onmouseup="window.handleSliderRelease()"
+                    ontouchstart="window.handleSliderGrab()" 
+                    ontouchend="window.handleSliderRelease()">
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-top:4px; color:${textColor}; font-family:monospace;">
+                    <span>Current Power:</span>
+                    <span id="volumePercentage" style="font-weight:bold; color:#ef4444;">50%</span>
+                </div>
+            </div>\n`;
 
             const textCodeOutput = `<!DOCTYPE html>
 <html lang="en">
@@ -385,18 +470,36 @@
             width: 100%;
             text-align: center;
         }
+        .hostile-slider-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px dotted #ef4444;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: inline-block;
+            width: 100%;
+            max-width: 320px;
+        }
+        .hostile-slider-box label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #f87171 !important;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .annoying-slider { width: 100%; accent-color: #ef4444; }
     </style>
 </head>
 <body>
     <div class="container">
-        ${structuralContent.trim().replace('oninput="window.handleTextInputSecret(this.value)"', 'oninput="playLocalLoopMP3(this.value)"').replace('onclick="window.parentPlayAudio()"', 'onclick="playRandomLocalMP3()"')}
+        ${structuralContent.trim().replace('oninput="window.handleTextInputSecret(this.value)"', 'oninput="playLocalLoopMP3(this.value)"').replace('onclick="window.parentPlayAudio()"', 'onclick="playRandomLocalMP3()"').replace('onmousedown="window.handleSliderGrab()" onmouseup="window.handleSliderRelease()" ontouchstart="window.handleSliderGrab()" ontouchend="window.handleSliderRelease()"', 'onmousedown="grab()" onmouseup="release()" ontouchstart="grab()" ontouchend="release()"')}
     </div>
 
     <audio id="localChaosPlayer" crossorigin="anonymous"></audio>
     <script>
-        var audioCtx = null;
-        var gainNode = null;
-        var sourceNode = null;
+        var audioCtx = null, gainNode = null, sourceNode = null;
+        var globalVol = 0.5, trackVol = 1.0, sliderTime = 0, driftSpd = 0.05, dragging = false;
 
         function initAudio(player) {
             if (!audioCtx) {
@@ -409,18 +512,34 @@
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
         }
 
+        function syncVol() { if(gainNode) gainNode.gain.value = trackVol * globalVol; }
+
+        setInterval(function() {
+            var s = document.getElementById('annoyingVolumeControl');
+            var txt = document.getElementById('volumePercentage');
+            if(!s) return;
+            sliderTime += driftSpd;
+            if(dragging) {
+                s.value = Math.max(0, Math.min(100, parseFloat(s.value) + (Math.sin(sliderTime*15)*4)));
+            } else {
+                s.value = Math.max(0, Math.min(100, parseFloat(s.value) + (Math.sin(sliderTime*2)*1.5)));
+            }
+            globalVol = parseFloat(s.value)/100;
+            if(txt) txt.innerText = Math.round(globalVol*100) + "%";
+            syncVol();
+        }, 30);
+
+        function grab() { dragging = true; }
+        function release() { dragging = false; driftSpd = (Math.random()*0.15)-0.075; }
+
         function playRandomLocalMP3() {
             var player = document.getElementById('localChaosPlayer');
             var status = document.getElementById('audioStatus');
             var trackNumber = Math.floor(Math.random() * 10) + 1;
-            var targetTrackName = "MP3 " + trackNumber + ".mp3";
-            
-            initAudio(player);
-            player.loop = false;
-            if (trackNumber === 9) { gainNode.gain.value = 2.0; } else { gainNode.gain.value = 1.0; }
-            
-            if (status) status.innerText = "Playing: " + targetTrackName;
-            player.src = targetTrackName;
+            initAudio(player); player.loop = false;
+            trackVol = (trackNumber === 9) ? 2.0 : 1.0; syncVol();
+            if (status) status.innerText = "Playing: MP3 " + trackNumber + ".mp3";
+            player.src = "MP3 " + trackNumber + ".mp3";
             player.play().catch(function(err) { console.log(err); });
         }
 
@@ -429,24 +548,16 @@
             var status = document.getElementById('audioStatus');
             var cleanText = inputVal.trim().toLowerCase().replace(/\\s+/g, '');
             var match = cleanText.match(/^mp3([1-9]|10)\\.mp3$/);
-
             if (match) {
                 var trackNumber = parseInt(match[1]);
-                var targetTrackName = "MP3 " + trackNumber + ".mp3";
-                
-                initAudio(player);
-                player.loop = true;
-                if (trackNumber === 9) { gainNode.gain.value = 2.0; } else { gainNode.gain.value = 1.0; }
-                
-                if (status) status.innerText = "🔄 Looping: " + targetTrackName;
-                if (!player.src.endsWith(encodeURIComponent(targetTrackName))) {
-                    player.src = targetTrackName;
-                    player.play().catch(function(err) { console.log(err); });
+                initAudio(player); player.loop = true;
+                trackVol = (trackNumber === 9) ? 2.0 : 1.0; syncVol();
+                if (status) status.innerText = "🔄 Looping: MP3 " + trackNumber + ".mp3";
+                if (!player.src.endsWith(encodeURIComponent("MP3 " + trackNumber + ".mp3"))) {
+                    player.src = "MP3 " + trackNumber + ".mp3"; player.play().catch(function(err) { console.log(err); });
                 }
             } else if (cleanText === "") {
-                player.pause();
-                player.loop = false;
-                if (status) status.innerText = "";
+                player.pause(); player.loop = false; if (status) status.innerText = "";
             }
         }
     <\/script>
@@ -462,6 +573,9 @@
                     ${structuralContent.trim()}
                 </div>
             `;
+
+            // Spin up the visual background loop inside the main application canvas frame
+            window.startAnnoyingSliderPhysics();
         }
 
         function copySeed() {
@@ -472,10 +586,7 @@
 
         function loadCustomSeed() {
             const inputVal = document.getElementById('loadSeedInput').value;
-            if(!inputVal) {
-                alert('Please type a seed value first!');
-                return;
-            }
+            if(!inputVal) return;
             generateRandomWebsite(parseInt(inputVal));
         }
 
