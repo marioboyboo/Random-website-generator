@@ -103,6 +103,19 @@
             cursor: pointer;
         }
 
+        .btn-warn {
+            background-color: #ef4444;
+            color: white;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-warn:hover { opacity: 0.9; }
+
         .main-container {
             display: flex;
             flex: 1;
@@ -159,31 +172,59 @@
             padding: 20px;
         }
 
-        /* Hostile Volume Container */
+        /* Annoying UI Wrappers */
         .hostile-slider-box {
             background: rgba(0, 0, 0, 0.4);
             border: 2px dotted #ef4444;
-            padding: 10px;
+            padding: 12px;
             border-radius: 6px;
             margin-top: 15px;
             display: inline-block;
             width: 100%;
-            max-width: 320px;
+            max-width: 340px;
+            text-align: left;
         }
 
         .hostile-slider-box label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             color: #f87171 !important;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .annoying-slider {
+        .radio-grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+            max-height: 130px;
+            overflow-y: auto;
+            padding: 5px;
+            background: #000;
+            border-radius: 4px;
+        }
+
+        .radio-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.6rem;
+            color: #fff;
+        }
+
+        .radio-item input { cursor: pointer; }
+
+        .pi-input-field {
             width: 100%;
-            cursor: not-allowed;
-            accent-color: #ef4444;
+            background: #000;
+            border: 1px solid #f87171;
+            color: #f87171;
+            padding: 6px;
+            font-family: monospace;
+            border-radius: 4px;
+            margin-top: 4px;
         }
 
         @media (max-width: 768px) {
@@ -212,6 +253,7 @@
                 <button class="btn-secondary" style="padding: 0.4rem 0.6rem;" onclick="loadCustomSeed()">Load</button>
             </div>
 
+            <button class="btn-warn" onclick="window.triggerSeededVolumeSystem()">⚙️ Change MP3 volume</button>
             <button class="btn" onclick="generateRandomWebsite()">🎲 Generate New Site</button>
         </div>
     </header>
@@ -244,12 +286,15 @@
             "Processing structural chaos elements..."
         ];
         const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS"];
+        const PI_STRING = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679";
 
         let currentSeed = 1;
-        let globalVolumeMultiplier = 1.0; 
+        let activeVolumeSystemType = 0; // 0: Drift, 1: Radio Matrix, 2: Pi Input
+
+        let globalVolumeMultiplier = 0.5; 
         let trackBaseVolume = 1.0;
 
-        // Chaos Slider Physics Variables
+        // Physics values
         let sliderInterval = null;
         let sliderTime = 0;
         let baseDriftSpeed = 0.05;
@@ -276,39 +321,41 @@
                 sourceNode.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
         }
 
-        // Live hardware volume updater combining track properties and annoying slider value
         function updateFinalHardwareVolume() {
             if (gainNode) {
                 gainNode.gain.value = trackBaseVolume * globalVolumeMultiplier;
             }
         }
 
-        // Hostile Slider Engine Initialization
+        // Active state router for top-bar click logic tied directly to current seed value
+        window.triggerSeededVolumeSystem = function() {
+            let workingSeed = parseInt(document.getElementById('currentSeedDisplay').innerText) || 123456;
+            // Generate deterministic layout style 0, 1, or 2 from seed configuration
+            activeVolumeSystemType = workingSeed % 3;
+            
+            // Re-render the existing structure to reveal the chosen annoying module interface
+            renderActiveVolumeUIElement();
+        };
+
         window.startAnnoyingSliderPhysics = function() {
             if (sliderInterval) clearInterval(sliderInterval);
-            
+            if (activeVolumeSystemType !== 0) return; // Only process frame updates if Drift layout is active
+
             sliderInterval = setInterval(function() {
                 var slider = document.getElementById('annoyingVolumeControl');
                 var textIndicator = document.getElementById('volumePercentage');
                 if (!slider) return;
 
                 sliderTime += baseDriftSpeed;
-                
-                // If user is actively wrestling the knob, make it vibrate aggressively
                 if (isUserDraggingSlider) {
                     let jitter = (Math.sin(sliderTime * 15) * 4);
-                    let newVal = Math.max(0, Math.min(100, parseFloat(slider.value) + jitter));
-                    slider.value = newVal;
+                    slider.value = Math.max(0, Math.min(100, parseFloat(slider.value) + jitter));
                 } else {
-                    // If left alone, drift fluidly back and forth like a boat sliding down a wave
                     let drift = (Math.sin(sliderTime * 2) * 1.5) + (Math.cos(sliderTime * 5) * 0.5);
-                    let newVal = Math.max(0, Math.min(100, parseFloat(slider.value) + drift));
-                    slider.value = newVal;
+                    slider.value = Math.max(0, Math.min(100, parseFloat(slider.value) + drift));
                 }
 
                 globalVolumeMultiplier = parseFloat(slider.value) / 100;
@@ -317,34 +364,129 @@
             }, 30);
         };
 
-        window.handleSliderGrab = function() {
-            isUserDraggingSlider = true;
-        };
-
+        window.handleSliderGrab = function() { isUserDraggingSlider = true; };
         window.handleSliderRelease = function() {
             isUserDraggingSlider = false;
-            // Randomize speed/direction parameters every single time they let go to destroy muscle memory
             baseDriftSpeed = (Math.random() * 0.15) - 0.075;
             if(baseDriftSpeed === 0) baseDriftSpeed = 0.05;
         };
 
+        window.handleRadioMatrixChange = function(value) {
+            globalVolumeMultiplier = parseInt(value) / 100;
+            var textIndicator = document.getElementById('volumePercentage');
+            if (textIndicator) textIndicator.innerText = value + "%";
+            updateFinalHardwareVolume();
+        };
+
+        window.handlePiVolumeInput = function(inputElement) {
+            let val = inputElement.value;
+            var textIndicator = document.getElementById('volumePercentage');
+            
+            if (val === "") {
+                globalVolumeMultiplier = 0;
+                if (textIndicator) textIndicator.innerText = "0%";
+                updateFinalHardwareVolume();
+                return;
+            }
+
+            // Check if string characters match Pi sequentially
+            if (PI_STRING.startsWith(val)) {
+                // Volume equals characters correctly entered up to 100 max
+                let unlockedVolume = Math.min(100, val.length);
+                globalVolumeMultiplier = unlockedVolume / 100;
+                if (textIndicator) textIndicator.innerText = unlockedVolume + "% (Unlocked)";
+                inputElement.style.borderColor = "#34d399";
+            } else {
+                // Lock volume to 1% instantly if a failure or typo is discovered
+                globalVolumeMultiplier = 0.01;
+                if (textIndicator) textIndicator.innerText = "1% (INVALID PI VALUE)";
+                inputElement.style.borderColor = "#ef4444";
+            }
+            updateFinalHardwareVolume();
+        };
+
+        // Generates structural HTML elements for the selected hardware widget layout
+        function buildVolumeSystemHTML(textColor, headingColor) {
+            let html = `<div class="hostile-slider-box" id="volumeSystemWrapper">`;
+            
+            if (activeVolumeSystemType === 0) {
+                html += `
+                    <label>⚠️ MODE: SINUSOIDAL DRIFT TRACKER</label>
+                    <input type="range" id="annoyingVolumeControl" class="annoying-slider" min="0" max="100" value="${Math.round(globalVolumeMultiplier*100)}" 
+                        onmousedown="window.handleSliderGrab()" onmouseup="window.handleSliderRelease()"
+                        ontouchstart="window.handleSliderGrab()" ontouchend="window.handleSliderRelease()">`;
+            } 
+            else if (activeVolumeSystemType === 1) {
+                html += `
+                    <label>⚠️ MODE: DISCRETE ELEMENT MATRIX</label>
+                    <div class="radio-grid-container">`;
+                for (let i = 1; i <= 100; i++) {
+                    let checked = Math.round(globalVolumeMultiplier*100) === i ? "checked" : "";
+                    html += `<div class="radio-item"><input type="radio" name="annoyingRadioVol" value="${i}" ${checked} onchange="window.handleRadioMatrixChange(this.value)">${i}</div>`;
+                }
+                html += `</div>`;
+            } 
+            else {
+                html += `
+                    <label>⚠️ MODE: CRYPTOGRAPHIC PI VALIDATOR</label>
+                    <div style="font-size:0.7rem; color:#94a3b8; margin-bottom:4px;">Type digits of Pi (3.14159...) to unlock scale power.</div>
+                    <input type="text" class="pi-input-field" placeholder="Start typing 3.1415..." oninput="window.handlePiVolumeInput(this)">`;
+            }
+
+            html += `
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-top:6px; color:${textColor}; font-family:monospace;">
+                    <span>Current Power:</span>
+                    <span id="volumePercentage" style="font-weight:bold; color:#ef4444;">${Math.round(globalVolumeMultiplier*100)}%</span>
+                </div>
+            </div>`;
+            return html;
+        }
+
+        // Target rendering handler used during generation cycles and structural switches
+        function renderActiveVolumeUIElement() {
+            let container = document.getElementById('volumeSystemDynamicTarget');
+            let innerContainer = document.getElementById('localVolumeSystemDynamicTarget');
+            
+            if (!container) return;
+            
+            // Harvest current structural setup coloring profiles to match theme
+            let textIndicator = document.getElementById('audioStatus');
+            let textColor = textIndicator ? textIndicator.style.color : "#ef4444";
+
+            let compiledWidgetHTML = buildVolumeSystemHTML(textColor, textColor);
+            container.innerHTML = compiledWidgetHTML;
+            
+            if (innerContainer) {
+                innerContainer.innerHTML = buildVolumeSystemHTML(textColor, textColor)
+                    .replace('window.handleSliderGrab()', 'grab()')
+                    .replace('window.handleSliderRelease()', 'release()')
+                    .replace('window.handleRadioMatrixChange(this.value)', 'radioChange(this.value)')
+                    .replace('window.handlePiVolumeInput(this)', 'piChange(this)');
+            }
+
+            // Fire running frame loops if sliding physics are chosen
+            if (activeVolumeSystemType === 0) {
+                window.startAnnoyingSliderPhysics();
+            } else {
+                if (sliderInterval) clearInterval(sliderInterval);
+            }
+            
+            // Push active code update updates to source panel
+            regenerateStoredSourceCodeField();
+        }
+
         window.parentPlayAudio = function() {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
-            
             var trackNumber = Math.floor(Math.random() * 10) + 1;
             var trackName = "MP3 " + trackNumber + ".mp3";
             
             initAudioPipeline(player);
             player.loop = false; 
-
-            if (trackNumber === 9) { trackBaseVolume = 2.0; } 
-            else { trackBaseVolume = 1.0; }
-            
+            trackBaseVolume = (trackNumber === 9) ? 2.0 : 1.0;
             updateFinalHardwareVolume();
             
             if (status) status.innerText = "Playing: " + trackName;
-            
             player.src = trackName;
             player.load(); 
             player.play().catch(function(err) { console.error(err); });
@@ -353,68 +495,68 @@
         window.handleTextInputSecret = function(inputVal) {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
-            
             var cleanText = inputVal.trim().toLowerCase().replace(/\s+/g, '');
             var match = cleanText.match(/^mp3([1-9]|10)\.mp3$/);
 
             if (match) {
                 var trackNumber = parseInt(match[1]);
                 var trackName = "MP3 " + trackNumber + ".mp3";
-
                 initAudioPipeline(player);
                 player.loop = true; 
-
-                if (trackNumber === 9) { trackBaseVolume = 2.0; } 
-                else { trackBaseVolume = 1.0; }
-
+                trackBaseVolume = (trackNumber === 9) ? 2.0 : 1.0;
                 updateFinalHardwareVolume();
 
                 if (status) status.innerText = "🔄 Looping: " + trackName;
-
                 if (!player.src.endsWith(encodeURIComponent(trackName))) {
                     player.src = trackName;
                     player.load();
                     player.play().catch(function(err) { console.error("Loop failed:", err); });
                 }
             } else if (cleanText === "") {
-                player.pause();
-                player.loop = false;
+                player.pause(); player.loop = false;
                 if (status) status.innerText = "";
             }
         };
 
+        // Keeps track of the master structural content strings across seed changes
+        let capturedStructuralContentBase = "";
+        let currentSiteTitle = "";
+        let currentMainBg = "";
+        let currentPanelBg = "";
+        let currentSelectedFont = "";
+
         function generateRandomWebsite(forcedSeed) {
             var player = document.getElementById('masterAudioPlayer');
-            if (player) {
-                player.pause();
-                player.loop = false;
-            }
+            if (player) { player.pause(); player.loop = false; }
 
             if (forcedSeed !== undefined) { currentSeed = forcedSeed; } 
             else { currentSeed = Math.floor(Math.random() * 900000) + 100000; }
 
             document.getElementById('currentSeedDisplay').innerText = currentSeed;
+            
+            // Assign active layout system index using current active seed configuration
+            activeVolumeSystemType = currentSeed % 3;
 
             const headingColor = randColor();
             const textColor = randColor();
-            const panelBg = randColor();
-            const mainBg = randColor();
-            const selectedFont = rand(fonts);
-            const siteTitle = `${rand(words)} ${rand(nouns)}`;
+            currentPanelBg = randColor();
+            currentMainBg = randColor();
+            currentSelectedFont = rand(fonts);
+            currentSiteTitle = `${rand(words)} ${rand(nouns)}`;
             
             let structuralContent = `
-                <h1 style="color: ${headingColor}; font-size: ${randRange(2, 3.5)}rem; margin-bottom: 15px; font-family: '${selectedFont}', sans-serif;">${siteTitle}</h1>
-                <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">${rand(phrases)}</p>
+                <h1 style="color: ${headingColor}; font-size: ${randRange(2, 3.5)}rem; margin-bottom: 15px; font-family: '${currentSelectedFont}', sans-serif;">${currentSiteTitle}</h1>
+                <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px; font-family: '${currentSelectedFont}', sans-serif;">${rand(phrases)}</p>
             `;
 
             structuralContent += `
-                <div style="margin-bottom: 20px; font-family: '${selectedFont}', sans-serif;">
+                <div style="margin-bottom: 20px; font-family: '${currentSelectedFont}', sans-serif;">
                     <p id="audioStatus" style="font-size:1rem; font-weight:bold; color:${textColor}; min-height: 1.2em;"></p>
                 </div>\n`;
 
             if (seededRandom() < 0.5) {
                 structuralContent += `
-                <div style="margin-bottom: 25px; font-family: '${selectedFont}', sans-serif;">
+                <div style="margin-bottom: 25px; font-family: '${currentSelectedFont}', sans-serif;">
                     <label style="display:block; margin-bottom:5px; color:${textColor}; font-weight:bold;">Secret Audio Input Field:</label>
                     <input type="text" oninput="window.handleTextInputSecret(this.value)" placeholder="Just type random gibberish in here" style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
                 </div>\n`;
@@ -422,7 +564,7 @@
 
             if (seededRandom() < 0.25) {
                 structuralContent += `
-                <div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block; font-family: '${selectedFont}', sans-serif;">
+                <div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block; font-family: '${currentSelectedFont}', sans-serif;">
                     <p style="color: ${textColor}; font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🎵 Audio Node Trigger Detected</p>
                     <button onclick="window.parentPlayAudio()" style="background: ${headingColor}; color: #fff; border: none; padding: 12px 24px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000; font-size: 1rem;">
                         ▶ Play Random MP3
@@ -430,39 +572,46 @@
                 </div>\n`;
             }
 
-            // ALWAYS append the malicious volume component to the generated card design
-            structuralContent += `
-            <div class="hostile-slider-box">
-                <label>⚠️ WARNING: UNSTABLE VOLUME SYSTEM</label>
-                <input type="range" id="annoyingVolumeControl" class="annoying-slider" min="0" max="100" value="50" 
-                    onmousedown="window.handleSliderGrab()" 
-                    onmouseup="window.handleSliderRelease()"
-                    ontouchstart="window.handleSliderGrab()" 
-                    ontouchend="window.handleSliderRelease()">
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-top:4px; color:${textColor}; font-family:monospace;">
-                    <span>Current Power:</span>
-                    <span id="volumePercentage" style="font-weight:bold; color:#ef4444;">50%</span>
+            capturedStructuralContentBase = structuralContent;
+
+            const canvas = document.getElementById('previewCanvas');
+            canvas.style.backgroundColor = currentMainBg;
+            canvas.innerHTML = `
+                <div style="background-color: ${currentPanelBg}; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 600px; width: 100%; text-align: center;">
+                    ${capturedStructuralContentBase.trim()}
+                    <div id="volumeSystemDynamicTarget"></div>
                 </div>
-            </div>\n`;
+            `;
+
+            renderActiveVolumeUIElement();
+        }
+
+        function regenerateStoredSourceCodeField() {
+            let textIndicator = document.getElementById('audioStatus');
+            let textColor = textIndicator ? textIndicator.style.color : "#ef4444";
+            let rawVolumeHTML = buildVolumeSystemHTML(textColor, textColor)
+                .replace('onmousedown="window.handleSliderGrab()" onmouseup="window.handleSliderRelease()" ontouchstart="window.handleSliderGrab()" ontouchend="window.handleSliderRelease()"', 'onmousedown="grab()" onmouseup="release()" ontouchstart="grab()" ontouchend="release()"')
+                .replace('onchange="window.handleRadioMatrixChange(this.value)"', 'onchange="radioChange(this.value)"')
+                .replace('oninput="window.handlePiVolumeInput(this)"', 'oninput="piChange(this)"');
 
             const textCodeOutput = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>${siteTitle}</title>
+    <title>${currentSiteTitle}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background-color: ${mainBg}; 
+            background-color: ${currentMainBg}; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             min-height: 100vh; 
-            font-family: '${selectedFont}', sans-serif;
+            font-family: '${currentSelectedFont}', sans-serif;
             padding: 20px;
         }
         .container { 
-            background-color: ${panelBg}; 
+            background-color: ${currentPanelBg}; 
             padding: 40px; 
             border-radius: 12px; 
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
@@ -473,33 +622,51 @@
         .hostile-slider-box {
             background: rgba(0, 0, 0, 0.4);
             border: 2px dotted #ef4444;
-            padding: 10px;
+            padding: 12px;
             border-radius: 6px;
             margin-top: 15px;
             display: inline-block;
             width: 100%;
-            max-width: 320px;
+            max-width: 340px;
+            text-align: left;
         }
         .hostile-slider-box label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             color: #f87171 !important;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             text-transform: uppercase;
         }
         .annoying-slider { width: 100%; accent-color: #ef4444; }
+        .radio-grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+            max-height: 130px;
+            overflow-y: auto;
+            padding: 5px;
+            background: #000;
+            border-radius: 4px;
+        }
+        .radio-item { display: flex; flex-direction: column; align-items: center; font-size: 0.6rem; color: #fff; }
+        .pi-input-field { width: 100%; background: #000; border: 1px solid #f87171; color: #f87171; padding: 6px; font-family: monospace; border-radius: 4px; margin-top: 4px; }
     </style>
 </head>
 <body>
     <div class="container">
-        ${structuralContent.trim().replace('oninput="window.handleTextInputSecret(this.value)"', 'oninput="playLocalLoopMP3(this.value)"').replace('onclick="window.parentPlayAudio()"', 'onclick="playRandomLocalMP3()"').replace('onmousedown="window.handleSliderGrab()" onmouseup="window.handleSliderRelease()" ontouchstart="window.handleSliderGrab()" ontouchend="window.handleSliderRelease()"', 'onmousedown="grab()" onmouseup="release()" ontouchstart="grab()" ontouchend="release()"')}
+        ${capturedStructuralContentBase.trim().replace('oninput="window.handleTextInputSecret(this.value)"', 'oninput="playLocalLoopMP3(this.value)"').replace('onclick="window.parentPlayAudio()"', 'onclick="playRandomLocalMP3()"')}
+        <div id="localVolumeSystemDynamicTarget">
+            ${rawVolumeHTML}
+        </div>
     </div>
 
     <audio id="localChaosPlayer" crossorigin="anonymous"></audio>
     <script>
         var audioCtx = null, gainNode = null, sourceNode = null;
-        var globalVol = 0.5, trackVol = 1.0, sliderTime = 0, driftSpd = 0.05, dragging = false;
+        var globalVol = ${globalVolumeMultiplier}, trackVol = 1.0, sliderTime = 0, driftSpd = 0.05, dragging = false;
+        var mode = ${activeVolumeSystemType};
+        const PI_STR = "${PI_STRING}";
 
         function initAudio(player) {
             if (!audioCtx) {
@@ -515,6 +682,7 @@
         function syncVol() { if(gainNode) gainNode.gain.value = trackVol * globalVol; }
 
         setInterval(function() {
+            if (mode !== 0) return;
             var s = document.getElementById('annoyingVolumeControl');
             var txt = document.getElementById('volumePercentage');
             if(!s) return;
@@ -531,6 +699,26 @@
 
         function grab() { dragging = true; }
         function release() { dragging = false; driftSpd = (Math.random()*0.15)-0.075; }
+        
+        function radioChange(v) {
+            globalVol = parseInt(v)/100;
+            var txt = document.getElementById('volumePercentage');
+            if(txt) txt.innerText = v + "%";
+            syncVol();
+        }
+
+        function piChange(el) {
+            let val = el.value;
+            var txt = document.getElementById('volumePercentage');
+            if(val === "") { globalVol = 0; if(txt) txt.innerText = "0%"; syncVol(); return; }
+            if(PI_STR.startsWith(val)) {
+                let unl = Math.min(100, val.length); globalVol = unl/100;
+                if(txt) txt.innerText = unl + "% (Unlocked)"; el.style.borderColor = "#34d399";
+            } else {
+                globalVol = 0.01; if(txt) txt.innerText = "1% (INVALID PI VALUE)"; el.style.borderColor = "#ef4444";
+            }
+            syncVol();
+        }
 
         function playRandomLocalMP3() {
             var player = document.getElementById('localChaosPlayer');
@@ -565,17 +753,6 @@
 </html>`;
 
             document.getElementById('codeViewer').value = textCodeOutput;
-
-            const canvas = document.getElementById('previewCanvas');
-            canvas.style.backgroundColor = mainBg;
-            canvas.innerHTML = `
-                <div style="background-color: ${panelBg}; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 600px; width: 100%; text-align: center;">
-                    ${structuralContent.trim()}
-                </div>
-            `;
-
-            // Spin up the visual background loop inside the main application canvas frame
-            window.startAnnoyingSliderPhysics();
         }
 
         function copySeed() {
@@ -598,9 +775,7 @@
             alert('Code copied!');
         }
 
-        window.onload = function() {
-            generateRandomWebsite();
-        };
+        window.onload = function() { generateRandomWebsite(); };
     </script>
 </body>
 </html>
