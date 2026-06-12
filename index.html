@@ -40,20 +40,10 @@
             z-index: 10;
         }
 
-        h1 {
-            font-size: 1.5rem;
-            color: var(--text-color);
-        }
+        h1 { font-size: 1.5rem; color: var(--text-color); }
+        h1 span { color: var(--accent-color); }
 
-        h1 span {
-            color: var(--accent-color);
-        }
-
-        .controls-group {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
+        .controls-group { display: flex; align-items: center; gap: 0.75rem; }
 
         .seed-display {
             background: #020617;
@@ -87,11 +77,7 @@
             transition: all 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
-
-        .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
         .btn-secondary {
             background-color: #475569;
@@ -116,12 +102,7 @@
         }
         .btn-warn:hover { opacity: 0.9; }
 
-        .main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            flex-direction: row;
-        }
+        .main-container { display: flex; flex: 1; overflow: hidden; flex-direction: row; }
 
         .panel {
             flex: 1;
@@ -130,10 +111,7 @@
             border-right: 1px solid #334155;
             position: relative;
         }
-
-        .panel:last-child {
-            border-right: none;
-        }
+        .panel:last-child { border-right: none; }
 
         .panel-header {
             background-color: #1e293b80;
@@ -172,81 +150,45 @@
             padding: 20px;
         }
 
-        /* HOSTILE MODAL OVERLAY SYSTEM */
+        /* MODAL CORES */
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(2, 6, 23, 0.85);
-            backdrop-filter: blur(4px);
-            z-index: 9999;
-            display: none; /* Hidden by default */
-            justify-content: center;
-            align-items: center;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(4px);
+            z-index: 9999; display: none; justify-content: center; align-items: center;
         }
 
         .hostile-slider-box {
-            background: #1e293b;
-            border: 3px solid #ef4444;
-            padding: 25px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 400px;
-            text-align: left;
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5);
+            background: #1e293b; border: 3px solid #ef4444; padding: 25px;
+            border-radius: 12px; width: 100%; max-width: 420px; text-align: left;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5); color: #fff;
         }
 
         .hostile-slider-box label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: #f87171 !important;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            display: block; font-size: 0.85rem; font-weight: bold;
+            color: #f87171 !important; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 0.05em;
         }
 
-        .annoying-slider { 
-            width: 100%; 
-            accent-color: #ef4444;
-            margin: 10px 0;
-        }
+        .annoying-slider { width: 100%; accent-color: #ef4444; margin: 10px 0; }
 
         .radio-grid-container {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 4px;
-            max-height: 150px;
-            overflow-y: auto;
-            padding: 8px;
-            background: #020617;
-            border-radius: 6px;
-            border: 1px solid #334155;
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+            max-height: 150px; overflow-y: auto; padding: 8px;
+            background: #020617; border-radius: 6px; border: 1px solid #334155;
+        }
+        .radio-item { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; color: #94a3b8; }
+
+        .text-input-field {
+            width: 100%; background: #020617; border: 1px solid #f87171;
+            color: #34d399; padding: 10px; font-family: monospace;
+            border-radius: 6px; margin-top: 8px; outline: none;
         }
 
-        .radio-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.65rem;
-            color: #94a3b8;
+        .interactive-btn {
+            background: #ef4444; color: #fff; padding: 8px 12px; border: none;
+            border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 0.85rem;
         }
-
-        .radio-item input { cursor: pointer; }
-
-        .pi-input-field {
-            width: 100%;
-            background: #020617;
-            border: 1px solid #f87171;
-            color: #34d399;
-            padding: 10px;
-            font-family: monospace;
-            border-radius: 6px;
-            margin-top: 8px;
-            outline: none;
-        }
+        .interactive-btn:hover { opacity: 0.9; }
 
         @media (max-width: 768px) {
             body { overflow: auto; height: auto; min-height: 100vh; }
@@ -297,7 +239,7 @@
     <div id="hostileModalOverlay" class="modal-overlay">
         <div class="hostile-slider-box">
             <div id="volumeSystemDynamicTarget"></div>
-            <button class="btn" style="width:100%; margin-top:15px; background-color:#34d399; color:#020617;" onclick="window.closeHostileVolumeModal()">💾 Apply & Close Panels</button>
+            <button class="btn" style="width:100%; margin-top:20px; background-color:#34d399; color:#020617;" onclick="window.closeHostileVolumeModal()">💾 Apply & Close Panels</button>
         </div>
     </div>
 
@@ -306,194 +248,220 @@
     <script>
         const words = ["Quantum", "Glitch", "Matrix", "Cyber", "Void", "Omega", "Hyper", "Alpha", "Delta", "Turbo", "Cosmic", "Phantom", "Solar", "Static", "Cryptic"];
         const nouns = ["Portal", "System", "Node", "Network", "Beacon", "Core", "Module", "Vortex", "Grid", "Terminal", "Buffer", "Array", "Engine", "Console"];
-        const phrases = [
-            "System calibration is currently underway.",
-            "Data stream injection has reached maximum capacity.",
-            "Welcome to the fallback terminal node.",
-            "Unidentified protocols have been successfully initiated.",
-            "Processing structural chaos elements..."
-        ];
+        const phrases = ["System calibration is currently underway.","Data stream injection has reached maximum capacity.","Welcome to the fallback terminal node.","Unidentified protocols have been successfully initiated.","Processing structural chaos elements..."];
         const fonts = ["Arial", "Courier New", "Impact", "Georgia", "Comic Sans MS"];
         const PI_STRING = "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679";
 
         let currentSeed = 1;
-        let activeVolumeSystemType = 0; 
+        let activeVolumeSystemType = 0; // 0 to 7 now!
 
         let globalVolumeMultiplier = 0.5; 
         let trackBaseVolume = 1.0;
 
-        // Physics variables
-        let sliderInterval = null;
+        // Loop management
+        let globalLoopInterval = null;
         let sliderTime = 0;
         let baseDriftSpeed = 0.05;
         let isUserDraggingSlider = false;
+
+        // Mode specific runtime states
+        let launchVelocity = 0;
+        let tiltBalance = 50;
+        let tiltVelocity = 0;
 
         function seededRandom() {
             currentSeed = (currentSeed * 1664525 + 1013904223) % 4294967296;
             return currentSeed / 4294967296;
         }
-
         function rand(arr) { return arr[Math.floor(seededRandom() * arr.length)]; }
         function randRange(min, max) { return Math.floor(seededRandom() * (max - min + 1)) + min; }
         function randColor() { return `hsl(${randRange(0, 360)}, ${randRange(50, 95)}%, ${randRange(30, 70)}%)`; }
 
-        let audioCtx = null;
-        let gainNode = null;
-        let sourceNode = null;
-
+        let audioCtx = null, gainNode = null, sourceNode = null;
         function initAudioPipeline(player) {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 gainNode = audioCtx.createGain();
                 sourceNode = audioCtx.createMediaElementSource(player);
-                sourceNode.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
+                sourceNode.connect(gainNode); gainNode.connect(audioCtx.destination);
             }
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
         }
 
         function updateFinalHardwareVolume() {
-            if (gainNode) {
-                gainNode.gain.value = trackBaseVolume * globalVolumeMultiplier;
-            }
+            if (gainNode) { gainNode.gain.value = trackBaseVolume * globalVolumeMultiplier; }
+            var indicator = document.getElementById('volumePercentage');
+            if (indicator) indicator.innerText = Math.round(globalVolumeMultiplier * 100) + "%";
         }
 
-        // Open modal context and load layout configurations
         window.openHostileVolumeModal = function() {
             let workingSeed = parseInt(document.getElementById('currentSeedDisplay').innerText) || 123456;
-            activeVolumeSystemType = workingSeed % 3;
+            activeVolumeSystemType = workingSeed % 8; // Split into 8 individual modes matching the video clip!
 
             document.getElementById('hostileModalOverlay').style.display = 'flex';
             renderActiveVolumeUIElement();
+            startModalLoopPhysics();
         };
 
         window.closeHostileVolumeModal = function() {
             document.getElementById('hostileModalOverlay').style.display = 'none';
-            if (sliderInterval) clearInterval(sliderInterval);
+            if (globalLoopInterval) clearInterval(globalLoopInterval);
         };
 
-        window.startAnnoyingSliderPhysics = function() {
-            if (sliderInterval) clearInterval(sliderInterval);
-            if (activeVolumeSystemType !== 0) return; 
-
-            sliderInterval = setInterval(function() {
-                var slider = document.getElementById('annoyingVolumeControl');
-                var textIndicator = document.getElementById('volumePercentage');
-                if (!slider) return;
-
-                sliderTime += baseDriftSpeed;
-                if (isUserDraggingSlider) {
-                    let jitter = (Math.sin(sliderTime * 15) * 4);
-                    slider.value = Math.max(0, Math.min(100, parseFloat(slider.value) + jitter));
-                } else {
-                    let drift = (Math.sin(sliderTime * 2) * 1.5) + (Math.cos(sliderTime * 5) * 0.5);
-                    slider.value = Math.max(0, Math.min(100, parseFloat(slider.value) + drift));
+        function startModalLoopPhysics() {
+            if (globalLoopInterval) clearInterval(globalLoopInterval);
+            
+            globalLoopInterval = setInterval(function() {
+                if (activeVolumeSystemType === 0) { // Mode 0: Drift
+                    var slider = document.getElementById('annoyingVolumeControl');
+                    if (!slider) return;
+                    sliderTime += baseDriftSpeed;
+                    if (isUserDraggingSlider) {
+                        slider.value = Math.max(0, Math.min(100, parseFloat(slider.value) + (Math.sin(sliderTime * 15) * 4)));
+                    } else {
+                        slider.value = Math.max(0, Math.min(100, parseFloat(slider.value) + (Math.sin(sliderTime * 2) * 1.5)));
+                    }
+                    globalVolumeMultiplier = parseFloat(slider.value) / 100;
+                }
+                else if (activeVolumeSystemType === 1) { // Mode 1: Velocity launcher
+                    var slider = document.getElementById('velocitySlider');
+                    if(slider && launchVelocity !== 0) {
+                        let cur = parseFloat(slider.value) + launchVelocity;
+                        if(cur >= 100 || cur <= 0) launchVelocity = -launchVelocity; // Bounce violently
+                        slider.value = Math.max(0, Math.min(100, cur));
+                        globalVolumeMultiplier = parseFloat(slider.value) / 100;
+                    }
+                }
+                else if (activeVolumeSystemType === 2) { // Mode 2: Tilt physics
+                    tiltVelocity += (Math.random() * 0.4 - 0.2); // Random gravity tilt shift
+                    tiltBalance += tiltVelocity;
+                    var slider = document.getElementById('tiltSlider');
+                    if(slider) {
+                        slider.value = Math.max(0, Math.min(100, tiltBalance));
+                        globalVolumeMultiplier = parseFloat(slider.value) / 100;
+                    }
+                    if(tiltBalance <= 0 || tiltBalance >= 100) tiltVelocity = -tiltVelocity * 0.5; // Bounce off walls
+                }
+                else if (activeVolumeSystemType === 3) { // Mode 3: Constant Deflation Pump
+                    globalVolumeMultiplier = Math.max(0, globalVolumeMultiplier - 0.006);
+                    var slider = document.getElementById('pumpSlider');
+                    if(slider) slider.value = Math.round(globalVolumeMultiplier * 100);
                 }
 
-                globalVolumeMultiplier = parseFloat(slider.value) / 100;
-                if (textIndicator) textIndicator.innerText = Math.round(globalVolumeMultiplier * 100) + "%";
                 updateFinalHardwareVolume();
             }, 30);
-        };
+        }
 
+        // Mode specific element handlers called from bindings
         window.handleSliderGrab = function() { isUserDraggingSlider = true; };
         window.handleSliderRelease = function() {
             isUserDraggingSlider = false;
             baseDriftSpeed = (Math.random() * 0.15) - 0.075;
-            if(baseDriftSpeed === 0) baseDriftSpeed = 0.05;
         };
-
-        window.handleRadioMatrixChange = function(value) {
-            globalVolumeMultiplier = parseInt(value) / 100;
-            var textIndicator = document.getElementById('volumePercentage');
-            if (textIndicator) textIndicator.innerText = value + "%";
+        window.launchVolumeVelocity = function() { launchVelocity = (Math.random() * 6) + 3; };
+        window.freezeVolumeVelocity = function() { launchVelocity = 0; };
+        window.tiltLeft = function() { tiltVelocity -= 1.5; };
+        window.tiltRight = function() { tiltVelocity += 1.5; };
+        window.pumpUpVolume = function() { globalVolumeMultiplier = Math.min(1.0, globalVolumeMultiplier + 0.12); };
+        window.handleRadioMatrixChange = function(v) { globalVolumeMultiplier = parseInt(v)/100; updateFinalHardwareVolume(); };
+        
+        window.handlePiVolumeInput = function(el) {
+            let val = el.value;
+            if (val === "") { globalVolumeMultiplier = 0; }
+            else if (PI_STRING.startsWith(val)) { globalVolumeMultiplier = Math.min(100, val.length) / 100; el.style.borderColor = "#34d399"; }
+            else { globalVolumeMultiplier = 0.01; el.style.borderColor = "#ef4444"; }
             updateFinalHardwareVolume();
         };
 
-        window.handlePiVolumeInput = function(inputElement) {
-            let val = inputElement.value;
-            var textIndicator = document.getElementById('volumePercentage');
-            
-            if (val === "") {
-                globalVolumeMultiplier = 0;
-                if (textIndicator) textIndicator.innerText = "0%";
-                updateFinalHardwareVolume();
-                return;
-            }
+        window.handleTextVolumeInput = function(el) {
+            let textMap = {"zero":0,"one":1,"ten":10,"twenty":20,"thirty":30,"forty":40,"fifty":50,"sixty":60,"seventy":70,"eighty":80,"ninety":90,"one hundred":100};
+            let cleaned = el.value.trim().toLowerCase();
+            if(textMap[cleaned] !== undefined) {
+                globalVolumeMultiplier = textMap[cleaned] / 100; el.style.borderColor = "#34d399";
+            } else { el.style.borderColor = "#ef4444"; }
+            updateFinalHardwareVolume();
+        };
 
-            if (PI_STRING.startsWith(val)) {
-                let unlockedVolume = Math.min(100, val.length);
-                globalVolumeMultiplier = unlockedVolume / 100;
-                if (textIndicator) textIndicator.innerText = unlockedVolume + "% (Unlocked)";
-                inputElement.style.borderColor = "#34d399";
-            } else {
-                globalVolumeMultiplier = 0.01;
-                if (textIndicator) textIndicator.innerText = "1% (INVALID PI VALUE)";
-                inputElement.style.borderColor = "#ef4444";
-            }
+        window.rollFaithDice = function() {
+            let d1 = Math.floor(Math.random() * 6) + 1;
+            let d2 = Math.floor(Math.random() * 6) + 1;
+            alert(`You rolled a ${d1} and a ${d2}!`);
+            globalVolumeMultiplier = ((d1 + d2) * 8.3) / 100;
             updateFinalHardwareVolume();
         };
 
         function buildVolumeSystemHTML() {
+            let curVal = Math.round(globalVolumeMultiplier * 100);
             let html = "";
-            if (activeVolumeSystemType === 0) {
-                html += `
-                    <label>⚠️ MODE: SINUSOIDAL DRIFT TRACKER</label>
-                    <input type="range" id="annoyingVolumeControl" class="annoying-slider" min="0" max="100" value="${Math.round(globalVolumeMultiplier*100)}" 
-                        onmousedown="window.handleSliderGrab()" onmouseup="window.handleSliderRelease()"
-                        ontouchstart="window.handleSliderGrab()" ontouchend="window.handleSliderRelease()">`;
-            } 
-            else if (activeVolumeSystemType === 1) {
-                html += `
-                    <label>⚠️ MODE: DISCRETE ELEMENT MATRIX</label>
-                    <div class="radio-grid-container">`;
-                for (let i = 1; i <= 100; i++) {
-                    let checked = Math.round(globalVolumeMultiplier*100) === i ? "checked" : "";
-                    html += `<div class="radio-item"><input type="radio" name="annoyingRadioVol" value="${i}" ${checked} onchange="window.handleRadioMatrixChange(this.value)">${i}</div>`;
-                }
-                html += `</div>`;
-            } 
-            else {
-                html += `
-                    <label>⚠️ MODE: CRYPTOGRAPHIC PI VALIDATOR</label>
-                    <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">Type digits of Pi (3.14159...) to unlock scale power.</div>
-                    <input type="text" class="pi-input-field" placeholder="Start typing 3.1415..." oninput="window.handlePiVolumeInput(this)">`;
+            
+            switch(activeVolumeSystemType) {
+                case 0: // Sinusoidal Drift
+                    html += `<label>⚠️ MODE 1: SINUSOIDAL DRIFT SLIDER</label>
+                             <input type="range" id="annoyingVolumeControl" class="annoying-slider" min="0" max="100" value="${curVal}" onmousedown="window.handleSliderGrab()" onmouseup="window.handleSliderRelease()" ontouchstart="window.handleSliderGrab()" ontouchend="window.handleSliderRelease()">`;
+                    break;
+                case 1: // Launch speed
+                    html += `<label>⚠️ MODE 2: VELOCITY ROCKET ACCELERATOR</label>
+                             <input type="range" id="velocitySlider" class="annoying-slider" min="0" max="100" value="${curVal}" disabled>
+                             <button class="interactive-btn" onclick="window.launchVolumeVelocity()">🚀 Launch Engine</button>
+                             <button class="interactive-btn" style="background:#34d399; color:#000;" onclick="window.freezeVolumeVelocity()">🛑 Freeze Level</button>`;
+                    break;
+                case 2: // Tilt gravity balance
+                    html += `<label>⚠️ MODE 3: TILT BALANCE ACCELERATION BEAM</label>
+                             <input type="range" id="tiltSlider" class="annoying-slider" min="0" max="100" value="${curVal}" disabled>
+                             <button class="interactive-btn" onclick="window.tiltLeft()">◀ Tilt Left</button>
+                             <button class="interactive-btn" onclick="window.tiltRight()">Tilt Right ▶</button>`;
+                    break;
+                case 3: // Pneumatic pump
+                    html += `<label>⚠️ MODE 4: PNEUMATIC LEAKING PUMP VALVE</label>
+                             <input type="range" id="pumpSlider" class="annoying-slider" min="0" max="100" value="${curVal}" disabled>
+                             <button class="interactive-btn" style="width:100%; padding:12px;" onclick="window.pumpUpVolume()">🪠 Mash to Pump Volume Up</button>`;
+                    break;
+                case 4: // Pi input
+                    html += `<label>⚠️ MODE 5: CRYPTOGRAPHIC PI VALIDATOR</label>
+                             <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:4px;">Type string digits of Pi (3.14159...) to grow scale limits.</div>
+                             <input type="text" class="text-input-field" placeholder="3.1415..." oninput="window.handlePiVolumeInput(this)">`;
+                    break;
+                case 5: // English Text entry
+                    html += `<label>⚠️ MODE 6: ALPHABETIC LITERAL STATEMENT PARSER</label>
+                             <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:4px;">Type literal bounds matching keys: "zero", "ten", "twenty", "fifty", "one hundred"</div>
+                             <input type="text" class="text-input-field" placeholder="Type word volume value..." oninput="window.handleTextVolumeInput(this)">`;
+                    break;
+                case 6: // Discrete Matrix
+                    html += `<label>⚠️ MODE 7: DISCRETE ELEMENT MATRIX GRID</label>
+                             <div class="radio-grid-container">`;
+                    for (let i = 1; i <= 100; i++) {
+                        let checked = curVal === i ? "checked" : "";
+                        html += `<div class="radio-item"><input type="radio" name="annoyingRadioVol" value="${i}" ${checked} onchange="window.handleRadioMatrixChange(this.value)">${i}</div>`;
+                    }
+                    html += `</div>`;
+                    break;
+                case 7: // Dice roll
+                    html += `<label>⚠️ MODE 8: DICE ROLL OF BLIND FAITH</label>
+                             <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px;">Volume allocation is determined completely by throwing fate dice.</div>
+                             <button class="interactive-btn" style="width:100%; padding:15px; background:#8b5cf6;" onclick="window.rollFaithDice()">🎲 Roll Dice</button>`;
+                    break;
             }
 
-            html += `
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:12px; color:#f8fafc; font-family:monospace;">
-                    <span>Current Power Setting:</span>
-                    <span id="volumePercentage" style="font-weight:bold; color:#ef4444;">${Math.round(globalVolumeMultiplier*100)}%</span>
-                </div>`;
+            html += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-top:15px; color:#fff; font-family:monospace;">
+                        <span>Current Power Output:</span>
+                        <span id="volumePercentage" style="font-weight:bold; color:#ef4444;">${curVal}%</span>
+                     </div>`;
             return html;
         }
 
         function renderActiveVolumeUIElement() {
             let container = document.getElementById('volumeSystemDynamicTarget');
-            if (!container) return;
-
-            container.innerHTML = buildVolumeSystemHTML();
-
-            if (activeVolumeSystemType === 0) {
-                window.startAnnoyingSliderPhysics();
-            }
+            if (container) container.innerHTML = buildVolumeSystemHTML();
         }
 
         window.parentPlayAudio = function() {
             var player = document.getElementById('masterAudioPlayer');
             var status = document.getElementById('audioStatus');
             var trackNumber = Math.floor(Math.random() * 10) + 1;
-            var trackName = "MP3 " + trackNumber + ".mp3";
-            
-            initAudioPipeline(player);
-            player.loop = false; 
-            trackBaseVolume = (trackNumber === 9) ? 2.0 : 1.0;
-            updateFinalHardwareVolume();
-            
-            if (status) status.innerText = "Playing: " + trackName;
-            player.src = trackName;
-            player.load(); 
-            player.play().catch(function(err) { console.error(err); });
+            initAudioPipeline(player); player.loop = false; 
+            trackBaseVolume = (trackNumber === 9) ? 2.0 : 1.0; updateFinalHardwareVolume();
+            if (status) status.innerText = "Playing: MP3 " + trackNumber + ".mp3";
+            player.src = "MP3 " + trackNumber + ".mp3"; player.load(); player.play().catch(e => console.error(e));
         };
 
         window.handleTextInputSecret = function(inputVal) {
@@ -501,37 +469,22 @@
             var status = document.getElementById('audioStatus');
             var cleanText = inputVal.trim().toLowerCase().replace(/\s+/g, '');
             var match = cleanText.match(/^mp3([1-9]|10)\.mp3$/);
-
             if (match) {
                 var trackNumber = parseInt(match[1]);
-                var trackName = "MP3 " + trackNumber + ".mp3";
-                initAudioPipeline(player);
-                player.loop = true; 
-                trackBaseVolume = (trackNumber === 9) ? 2.0 : 1.0;
-                updateFinalHardwareVolume();
-
-                if (status) status.innerText = "🔄 Looping: " + trackName;
-                if (!player.src.endsWith(encodeURIComponent(trackName))) {
-                    player.src = trackName;
-                    player.load();
-                    player.play().catch(function(err) { console.error("Loop failed:", err); });
+                initAudioPipeline(player); player.loop = true; 
+                trackBaseVolume = (trackNumber === 9) ? 2.0 : 1.0; updateFinalHardwareVolume();
+                if (status) status.innerText = "🔄 Looping: MP3 " + trackNumber + ".mp3";
+                if (!player.src.endsWith(encodeURIComponent("MP3 " + trackNumber + ".mp3"))) {
+                    player.src = "MP3 " + trackNumber + ".mp3"; player.load(); player.play().catch(e => console.error(e));
                 }
-            } else if (cleanText === "") {
-                player.pause(); player.loop = false;
-                if (status) status.innerText = "";
-            }
+            } else if (cleanText === "") { player.pause(); player.loop = false; if (status) status.innerText = ""; }
         };
 
-        // State trackers for exported source code compilation
-        let capturedStructuralContentBase = "";
-        let currentSiteTitle = "";
-        let currentMainBg = "";
-        let currentPanelBg = "";
-        let currentSelectedFont = "";
+        // Static configuration cache arrays
+        let capturedStructuralContentBase = "", currentSiteTitle = "", currentMainBg = "", currentPanelBg = "", currentSelectedFont = "";
 
         function generateRandomWebsite(forcedSeed) {
-            // Close old physics loop instantly
-            if (sliderInterval) clearInterval(sliderInterval);
+            if (globalLoopInterval) clearInterval(globalLoopInterval);
             document.getElementById('hostileModalOverlay').style.display = 'none';
 
             var player = document.getElementById('masterAudioPlayer');
@@ -541,62 +494,45 @@
             else { currentSeed = Math.floor(Math.random() * 900000) + 100000; }
 
             document.getElementById('currentSeedDisplay').innerText = currentSeed;
-            activeVolumeSystemType = currentSeed % 3;
+            activeVolumeSystemType = currentSeed % 8;
 
-            const headingColor = randColor();
-            const textColor = randColor();
-            currentPanelBg = randColor();
-            currentMainBg = randColor();
-            currentSelectedFont = rand(fonts);
-            currentSiteTitle = `${rand(words)} ${rand(nouns)}`;
+            const headingColor = randColor(); const textColor = randColor();
+            currentPanelBg = randColor(); currentMainBg = randColor();
+            currentSelectedFont = rand(fonts); currentSiteTitle = `${rand(words)} ${rand(nouns)}`;
             
-            let structuralContent = `
-                <h1 style="color: ${headingColor}; font-size: ${randRange(2, 3.5)}rem; margin-bottom: 15px; font-family: '${currentSelectedFont}', sans-serif;">${currentSiteTitle}</h1>
+            let structuralContent = `<h1 style="color: ${headingColor}; font-size: ${randRange(2, 3.5)}rem; margin-bottom: 15px; font-family: '${currentSelectedFont}', sans-serif;">${currentSiteTitle}</h1>
                 <p style="color: ${textColor}; font-size: 1.1rem; margin-bottom: 25px; font-family: '${currentSelectedFont}', sans-serif;">${rand(phrases)}</p>
-            `;
-
-            structuralContent += `
                 <div style="margin-bottom: 20px; font-family: '${currentSelectedFont}', sans-serif;">
                     <p id="audioStatus" style="font-size:1rem; font-weight:bold; color:${textColor}; min-height: 1.2em;"></p>
                 </div>\n`;
 
             if (seededRandom() < 0.5) {
-                structuralContent += `
-                <div style="margin-bottom: 25px; font-family: '${currentSelectedFont}', sans-serif;">
+                structuralContent += `<div style="margin-bottom: 25px; font-family: '${currentSelectedFont}', sans-serif;">
                     <label style="display:block; margin-bottom:5px; color:${textColor}; font-weight:bold;">Secret Audio Input Field:</label>
                     <input type="text" oninput="window.handleTextInputSecret(this.value)" placeholder="Just type random gibberish in here" style="width: 100%; max-width: 400px; padding: 10px; border: 2px solid ${headingColor}; border-radius: 4px;">
                 </div>\n`;
             }
 
             if (seededRandom() < 0.25) {
-                structuralContent += `
-                <div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block; font-family: '${currentSelectedFont}', sans-serif;">
+                structuralContent += `<div style="margin-bottom: 25px; padding: 15px; border: 2px dashed ${headingColor}; background: rgba(255,255,255,0.1); border-radius: 8px; display: inline-block; font-family: '${currentSelectedFont}', sans-serif;">
                     <p style="color: ${textColor}; font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🎵 Audio Node Trigger Detected</p>
-                    <button onclick="window.parentPlayAudio()" style="background: ${headingColor}; color: #fff; border: none; padding: 12px 24px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000; font-size: 1rem;">
-                        ▶ Play Random MP3
-                    </button>
+                    <button onclick="window.parentPlayAudio()" style="background: ${headingColor}; color: #fff; border: none; padding: 12px 24px; font-weight: bold; cursor: pointer; border-radius: 4px; text-shadow: 1px 1px 2px #000; font-size: 1rem;">▶ Play Random MP3</button>
                 </div>\n`;
             }
 
             capturedStructuralContentBase = structuralContent;
-
             const canvas = document.getElementById('previewCanvas');
             canvas.style.backgroundColor = currentMainBg;
-            canvas.innerHTML = `
-                <div style="background-color: ${currentPanelBg}; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 600px; width: 100%; text-align: center;">
-                    ${capturedStructuralContentBase.trim()}
-                </div>
-            `;
+            canvas.innerHTML = `<div style="background-color: ${currentPanelBg}; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 600px; width: 100%; text-align: center;">${capturedStructuralContentBase.trim()}</div>`;
 
             regenerateStoredSourceCodeField();
         }
 
         function regenerateStoredSourceCodeField() {
-            // Compile clean local markup context mirroring modal parameters inside the downloadable source box
-            let exportVolumeHTML = buildVolumeSystemHTML()
-                .replace('onmousedown="window.handleSliderGrab()" onmouseup="window.handleSliderRelease()" ontouchstart="window.handleSliderGrab()" ontouchend="window.handleSliderRelease()"', 'onmousedown="grab()" onmouseup="release()" ontouchstart="grab()" ontouchend="release()"')
-                .replace('onchange="window.handleRadioMatrixChange(this.value)"', 'onchange="radioChange(this.value)"')
-                .replace('oninput="window.handlePiVolumeInput(this)"', 'oninput="piChange(this)"');
+            // Renders fully operating autonomous scripts inside code viewer targets
+            let localCodeHTML = buildVolumeSystemHTML()
+                .replace(/window\./g, '')
+                .replace(/this/g, 'this');
 
             const textCodeOutput = `<!DOCTYPE html>
 <html lang="en">
@@ -605,40 +541,18 @@
     <title>${currentSiteTitle}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background-color: ${currentMainBg}; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            font-family: '${currentSelectedFont}', sans-serif;
-            padding: 20px;
-        }
-        .container { 
-            background-color: ${currentPanelBg}; 
-            padding: 40px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-            max-width: 600px; 
-            width: 100%;
-            text-align: center;
-            position: relative;
-        }
-        .vol-trigger-btn {
-            margin-top: 15px; background: #ef4444; color: white; border: none; padding: 8px 16px; font-weight: bold; cursor: pointer; border-radius: 6px;
-        }
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2,6,23,0.9); z-index: 999; display: none; justify-content: center; align-items: center;
-        }
-        .hostile-slider-box {
-            background: #1e293b; border: 3px solid #ef4444; padding: 25px; border-radius: 12px; width: 100%; max-width: 360px; text-align: left; color: #fff;
-        }
+        body { background-color: ${currentMainBg}; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: '${currentSelectedFont}', sans-serif; padding: 20px; }
+        .container { background-color: ${currentPanelBg}; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 600px; width: 100%; text-align: center; }
+        .vol-trigger-btn { margin-top: 15px; background: #ef4444; color: white; border: none; padding: 8px 16px; font-weight: bold; cursor: pointer; border-radius: 6px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2,6,23,0.9); z-index: 999; display: none; justify-content: center; align-items: center; }
+        .hostile-slider-box { background: #1e293b; border: 3px solid #ef4444; padding: 25px; border-radius: 12px; width: 100%; max-width: 360px; text-align: left; color: #fff; }
         .hostile-slider-box label { display: block; font-size: 0.85rem; font-weight: bold; color: #f87171 !important; margin-bottom: 10px; text-transform: uppercase; }
         .annoying-slider { width: 100%; accent-color: #ef4444; }
         .radio-grid-container { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-height: 140px; overflow-y: auto; padding: 6px; background: #020617; border-radius: 4px; }
         .radio-item { display: flex; flex-direction: column; align-items: center; font-size: 0.61rem; color: #94a3b8; }
-        .pi-input-field { width: 100%; background: #020617; border: 1px solid #f87171; color: #34d399; padding: 8px; font-family: monospace; border-radius: 4px; }
-        .close-btn { width: 100%; margin-top: 15px; background: #34d399; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .text-input-field { width: 100%; background: #020617; border: 1px solid #f87171; color: #34d399; padding: 8px; font-family: monospace; }
+        .interactive-btn { background: #ef4444; color: #fff; padding: 6px 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 0.8rem; }
+        .close-btn { width: 100%; margin-top: 15px; background: #34d399; border: none; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 4px; color: #000; }
     </style>
 </head>
 <body>
@@ -649,7 +563,7 @@
 
     <div id="localVolModal" class="modal-overlay">
         <div class="hostile-slider-box">
-            ${exportVolumeHTML}
+            ${localCodeHTML}
             <button class="close-btn" onclick="closeVol()">Apply & Close</button>
         </div>
     </div>
@@ -659,6 +573,7 @@
         var audioCtx = null, gainNode = null, sourceNode = null;
         var globalVol = ${globalVolumeMultiplier}, trackVol = 1.0, sliderTime = 0, driftSpd = 0.05, dragging = false;
         var mode = ${activeVolumeSystemType};
+        var launchVelocity = 0, tiltBalance = 50, tiltVelocity = 0, loopInt = null;
         const PI_STR = "${PI_STRING}";
 
         function initAudio(player) {
@@ -666,83 +581,86 @@
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 gainNode = audioCtx.createGain();
                 sourceNode = audioCtx.createMediaElementSource(player);
-                sourceNode.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
+                sourceNode.connect(gainNode); gainNode.connect(audioCtx.destination);
             }
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
         }
 
-        function syncVol() { if(gainNode) gainNode.gain.value = trackVol * globalVol; }
-
-        function openVol() { document.getElementById('localVolModal').style.display = 'flex'; }
-        function closeVol() { document.getElementById('localVolModal').style.display = 'none'; }
-
-        setInterval(function() {
-            if (mode !== 0) return;
-            var s = document.getElementById('annoyingVolumeControl');
+        function syncVol() {
+            if(gainNode) gainNode.gain.value = trackVol * globalVol;
             var txt = document.getElementById('volumePercentage');
-            if(!s) return;
-            sliderTime += driftSpd;
-            if(dragging) {
-                s.value = Math.max(0, Math.min(100, parseFloat(s.value) + (Math.sin(sliderTime*15)*4)));
-            } else {
-                s.value = Math.max(0, Math.min(100, parseFloat(s.value) + (Math.sin(sliderTime*2)*1.5)));
-            }
-            globalVol = parseFloat(s.value)/100;
             if(txt) txt.innerText = Math.round(globalVol*100) + "%";
-            syncVol();
-        }, 30);
-
-        function grab() { dragging = true; }
-        function release() { dragging = false; driftSpd = (Math.random()*0.15)-0.075; }
-        
-        function radioChange(v) {
-            globalVol = parseInt(v)/100;
-            var txt = document.getElementById('volumePercentage');
-            if(txt) txt.innerText = v + "%";
-            syncVol();
         }
 
-        function piChange(el) {
+        function openVol() {
+            document.getElementById('localVolModal').style.display = 'flex';
+            if(loopInt) clearInterval(loopInt);
+            loopInt = setInterval(function() {
+                if(mode === 0) {
+                    var s = document.getElementById('annoyingVolumeControl'); if(!s) return; sliderTime += driftSpd;
+                    s.value = Math.max(0, Math.min(100, parseFloat(s.value) + (dragging ? Math.sin(sliderTime*15)*4 : Math.sin(sliderTime*2)*1.5)));
+                    globalVol = parseFloat(s.value)/100;
+                } else if(mode === 1 && launchVelocity !== 0) {
+                    var s = document.getElementById('velocitySlider'); if(!s) return;
+                    let c = parseFloat(s.value) + launchVelocity; if(c>=100||c<=0) launchVelocity = -launchVelocity;
+                    s.value = Math.max(0, Math.min(100, c)); globalVol = parseFloat(s.value)/100;
+                } else if(mode === 2) {
+                    tiltVelocity += (Math.random()*0.4 - 0.2); tiltBalance += tiltVelocity;
+                    var s = document.getElementById('tiltSlider'); if(s) s.value = Math.max(0, Math.min(100, tiltBalance));
+                    globalVol = tiltBalance/100; if(tiltBalance<=0||tiltBalance>=100) tiltVelocity = -tiltVelocity*0.5;
+                } else if(mode === 3) {
+                    globalVol = Math.max(0, globalVol - 0.006);
+                    var s = document.getElementById('pumpSlider'); if(s) s.value = Math.round(globalVol*100);
+                }
+                syncVol();
+            }, 30);
+        }
+        
+        function closeVol() { document.getElementById('localVolModal').style.display = 'none'; clearInterval(loopInt); }
+
+        function handleSliderGrab() { dragging = true; }
+        function handleSliderRelease() { dragging = false; driftSpd = (Math.random()*0.15)-0.075; }
+        function launchVolumeVelocity() { launchVelocity = (Math.random()*6)+3; }
+        function freezeVolumeVelocity() { launchVelocity = 0; }
+        function tiltLeft() { tiltVelocity -= 1.5; }
+        function tiltRight() { tiltVelocity += 1.5; }
+        function pumpUpVolume() { globalVol = Math.min(1.0, globalVol + 0.12); }
+        function handleRadioMatrixChange(v) { globalVol = parseInt(v)/100; syncVol(); }
+        function handlePiVolumeInput(el) {
             let val = el.value;
-            var txt = document.getElementById('volumePercentage');
-            if(val === "") { globalVol = 0; if(txt) txt.innerText = "0%"; syncVol(); return; }
-            if(PI_STR.startsWith(val)) {
-                let unl = Math.min(100, val.length); globalVol = unl/100;
-                if(txt) txt.innerText = unl + "% (Unlocked)"; el.style.borderColor = "#34d399";
-            } else {
-                globalVol = 0.01; if(txt) txt.innerText = "1% (INVALID PI VALUE)"; el.style.borderColor = "#ef4444";
-            }
+            if(val === "") globalVol = 0;
+            else if(PI_STR.startsWith(val)) globalVol = Math.min(100, val.length)/100;
+            else globalVol = 0.01;
             syncVol();
+        }
+        function handleTextVolumeInput(el) {
+            let m = {"zero":0,"one":1,"ten":10,"twenty":20,"thirty":30,"forty":40,"fifty":50,"sixty":60,"seventy":70,"eighty":80,"ninety":90,"one hundred":100};
+            let c = el.value.trim().toLowerCase(); if(m[c]!==undefined) globalVol = m[c]/100; syncVol();
+        }
+        function rollFaithDice() {
+            let d1 = Math.floor(Math.random()*6)+1, d2 = Math.floor(Math.random()*6)+1;
+            alert("Rolled: " + d1 + " & " + d2); globalVol = ((d1+d2)*8.3)/100; syncVol();
         }
 
         function playRandomLocalMP3() {
-            var player = document.getElementById('localChaosPlayer');
-            var status = document.getElementById('audioStatus');
-            var trackNumber = Math.floor(Math.random() * 10) + 1;
-            initAudio(player); player.loop = false;
+            var player = document.getElementById('localChaosPlayer'); var status = document.getElementById('audioStatus');
+            var trackNumber = Math.floor(Math.random() * 10) + 1; initAudio(player); player.loop = false;
             trackVol = (trackNumber === 9) ? 2.0 : 1.0; syncVol();
             if (status) status.innerText = "Playing: MP3 " + trackNumber + ".mp3";
-            player.src = "MP3 " + trackNumber + ".mp3";
-            player.play().catch(function(err) { console.log(err); });
+            player.src = "MP3 " + trackNumber + ".mp3"; player.play().catch(e => console.log(e));
         }
 
         function playLocalLoopMP3(inputVal) {
-            var player = document.getElementById('localChaosPlayer');
-            var status = document.getElementById('audioStatus');
-            var cleanText = inputVal.trim().toLowerCase().replace(/\\s+/g, '');
-            var match = cleanText.match(/^mp3([1-9]|10)\\.mp3$/);
+            var player = document.getElementById('localChaosPlayer'); var status = document.getElementById('audioStatus');
+            var cleanText = inputVal.trim().toLowerCase().replace(/\\s+/g, ''); var match = cleanText.match(/^mp3([1-9]|10)\\.mp3$/);
             if (match) {
-                var trackNumber = parseInt(match[1]);
-                initAudio(player); player.loop = true;
+                var trackNumber = parseInt(match[1]); initAudio(player); player.loop = true;
                 trackVol = (trackNumber === 9) ? 2.0 : 1.0; syncVol();
                 if (status) status.innerText = "🔄 Looping: MP3 " + trackNumber + ".mp3";
                 if (!player.src.endsWith(encodeURIComponent("MP3 " + trackNumber + ".mp3"))) {
-                    player.src = "MP3 " + trackNumber + ".mp3"; player.play().catch(function(err) { console.log(err); });
+                    player.src = "MP3 " + trackNumber + ".mp3"; player.play().catch(e => console.log(e));
                 }
-            } else if (cleanText === "") {
-                player.pause(); player.loop = false; if (status) status.innerText = "";
-            }
+            } else if (cleanText === "") { player.pause(); player.loop = false; if (status) status.innerText = ""; }
         }
     <\/script>
 </body>
@@ -753,22 +671,17 @@
 
         function copySeed() {
             const seedTxt = document.getElementById('currentSeedDisplay').innerText;
-            navigator.clipboard.writeText(seedTxt);
-            alert('Seed copied: ' + seedTxt);
+            navigator.clipboard.writeText(seedTxt); alert('Seed copied: ' + seedTxt);
         }
 
         function loadCustomSeed() {
             const inputVal = document.getElementById('loadSeedInput').value;
-            if(!inputVal) return;
-            generateRandomWebsite(parseInt(inputVal));
+            if(!inputVal) return; generateRandomWebsite(parseInt(inputVal));
         }
 
         function copyCode() {
-            const codeViewer = document.getElementById('codeViewer');
-            if(!codeViewer.value) return;
-            codeViewer.select();
-            navigator.clipboard.writeText(codeViewer.value);
-            alert('Code copied!');
+            const cv = document.getElementById('codeViewer'); if(!cv.value) return;
+            cv.select(); navigator.clipboard.writeText(cv.value); alert('Code copied!');
         }
 
         window.onload = function() { generateRandomWebsite(); };
